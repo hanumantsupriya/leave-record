@@ -2,10 +2,10 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>अग्निशमन रजा नोंद प्रणाली</title>
+    <title>अग्निशमन रजा नोंद प्रणाली - अद्ययावत</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 10px; }
         
         .setup-box { background: #e3f2fd; padding: 15px; border-radius: 8px; border: 1px solid #bbdefb; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
@@ -13,13 +13,13 @@
         
         label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #333; }
         input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        input:disabled { background-color: #eee; color: #777; }
+        input:disabled, input[readonly] { background-color: #eee; color: #555; }
 
         .btn-add { background-color: #2e7d32; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 18px; }
         .btn-add:hover { background-color: #1b5e20; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background-color: #d32f2f; color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .highlight { font-weight: bold; color: #d32f2f; }
@@ -52,11 +52,15 @@
         </div>
         <div>
             <label>शेवटचा हजर दिनांक (B):</label>
-            <input type="date" id="b_end">
+            <input type="date" id="b_end" onchange="updateLeaveStartDate()">
         </div>
         <div>
             <label>बिन पगारी रजा LWP (E):</label>
             <input type="number" id="e_lwp" value="0">
+        </div>
+        <div>
+            <label>रजेवर गेल्याचा दिनांक (O):</label>
+            <input type="date" id="o_leave_start" readonly>
         </div>
         <div>
             <label>रजा संपल्याचा दिनांक (P):</label>
@@ -83,6 +87,7 @@
                 <th>हजर दिवस (F)</th>
                 <th>साठलेली EL (G)</th>
                 <th>साठलेली ML (H)</th>
+                <th>गैरहजर दिनांक (O-P)</th>
                 <th>रजा प्रकार (Q)</th>
                 <th>रजा दिवस (R)</th>
                 <th>अंतिम शिल्लक EL (Z)</th>
@@ -100,10 +105,24 @@
 
     function setFirstStartDate() {
         if(isFirstEntry) {
-            let p3 = new Date(document.getElementById('p3_date').value);
-            let nextA = new Date(p3);
-            nextA.setDate(nextA.getDate() + 1);
-            document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
+            let p3Val = document.getElementById('p3_date').value;
+            if(p3Val) {
+                let p3 = new Date(p3Val);
+                let nextA = new Date(p3);
+                nextA.setDate(nextA.getDate() + 1);
+                document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
+            }
+        }
+    }
+
+    // Formula O = B + 1
+    function updateLeaveStartDate() {
+        let bVal = document.getElementById('b_end').value;
+        if(bVal) {
+            let bDate = new Date(bVal);
+            let oDate = new Date(bDate);
+            oDate.setDate(oDate.getDate() + 1);
+            document.getElementById('o_leave_start').value = oDate.toISOString().split('T')[0];
         }
     }
 
@@ -111,6 +130,7 @@
         let a = new Date(document.getElementById('a_start').value);
         let b = new Date(document.getElementById('b_end').value);
         let e = parseFloat(document.getElementById('e_lwp').value) || 0;
+        let o = new Date(document.getElementById('o_leave_start').value);
         let p = new Date(document.getElementById('p_leave_end').value);
         let q = document.getElementById('q_type').value;
 
@@ -119,19 +139,15 @@
             return;
         }
 
-        // पहिल्या एंट्रीच्या वेळी सुरुवातीचा बॅलन्स लॉक करणे
         if (isFirstEntry) {
             currentEL = parseFloat(document.getElementById('z3_bal').value) || 0;
             currentML = parseFloat(document.getElementById('aa3_bal').value) || 0;
-            
-            // इनपुट लॉक करणे
             document.getElementById('p3_date').disabled = true;
             document.getElementById('z3_bal').disabled = true;
             document.getElementById('aa3_bal').disabled = true;
             isFirstEntry = false;
         }
 
-        // हिशोब लॉजिक (Excel नुसार)
         let diff = Math.ceil(Math.abs(b - a) / (1000 * 60 * 60 * 24)) + 1;
         let f = diff - e;
 
@@ -142,16 +158,18 @@
         let z3_mod = Math.round((currentEL % 1) * 100);
         let g_int = Math.floor(g);
         let g_mod = Math.round((g % 1) * 100);
+        
+        // Max limit 365 for EL
         let k_val = Math.min(365, z3_int + g_int + Math.floor((z3_mod + g_mod)/11) + ((z3_mod + g_mod)%11)/100);
 
         let aa3_int = Math.floor(currentML);
         let aa3_mod = Math.round((currentML % 1) * 100);
         let h_int = Math.floor(h);
         let h_mod = Math.round((h % 1) * 100);
+        
+        // Max limit 120 for ML
         let l_val = Math.min(120, aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100);
 
-        let o = new Date(b);
-        o.setDate(o.getDate() + 1);
         let r_diff = Math.ceil(Math.abs(p - o) / (1000 * 60 * 60 * 24)) + 1;
 
         let finalEL, finalML;
@@ -166,7 +184,6 @@
             finalML = l_val;
         }
 
-        // टेबलमध्ये रो जोडणे
         let table = document.getElementById("recordTable").getElementsByTagName('tbody')[0];
         let row = table.insertRow();
         row.innerHTML = `
@@ -174,21 +191,21 @@
             <td>${f}</td>
             <td>${g.toFixed(2)}</td>
             <td>${h.toFixed(2)}</td>
+            <td>${o.toLocaleDateString('en-GB')} - ${p.toLocaleDateString('en-GB')}</td>
             <td>${q}</td>
             <td>${r_diff}</td>
             <td class="highlight">${finalEL.toFixed(2)}</td>
             <td class="highlight">${finalML.toFixed(2)}</td>
         `;
 
-        // बॅलन्स अपडेट आणि पुढील तारीख सेट करणे
         currentEL = finalEL;
         currentML = finalML;
         let nextA = new Date(p);
         nextA.setDate(nextA.getDate() + 1);
         document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
         
-        // फॉर्म क्लिअर करणे
         document.getElementById('b_end').value = "";
+        document.getElementById('o_leave_start').value = "";
         document.getElementById('p_leave_end').value = "";
     }
 </script>
