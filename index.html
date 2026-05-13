@@ -1,467 +1,219 @@
+<!DOCTYPE html>
 <html lang="mr">
-
 <head>
-
     <meta charset="UTF-8">
-
     <title>पुणे महानगरपालिका रजा नोंद प्रणाली</title>
-
     <style>
-
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
-
         .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-
         h2 { text-align: center; color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
-
         .setup-box { background: #e3f2fd; padding: 15px; border-radius: 8px; border: 1px solid #bbdefb; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-
         .entry-box { background: #fffde7; padding: 15px; border-radius: 8px; border: 1px solid #fbc02d; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
-
         label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #333; }
-
         input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-
         input:disabled, input[readonly] { background-color: #eee; color: #555; }
-
-        .btn-add { background-color: #1a73e8; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 18px; }
-
+        .btn-group { display: flex; gap: 10px; margin-top: 18px; }
+        .btn-add { background-color: #1a73e8; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; flex: 2; font-size: 16px; font-weight: bold; }
+        .btn-delete { background-color: #d32f2f; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; flex: 1; font-size: 14px; font-weight: bold; }
         .btn-add:hover { background-color: #1557b0; }
-
+        .btn-delete:hover { background-color: #b71c1c; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
-
         th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
-
         th { background-color: #1a73e8; color: white; }
-
         tr:nth-child(even) { background-color: #f9f9f9; }
-
         .highlight { font-weight: bold; color: #1a73e8; background: #e8f0fe; }
-
         .accumulated { color: #2e7d32; font-weight: bold; background: #f1f8e9; }
-
     </style>
-
 </head>
-
 <body>
 
-
-
 <div class="container">
-
     <h2>पुणे महानगरपालिका रजा नोंदणी पुस्तिका</h2>
 
-
-
     <div class="setup-box" id="initialSetup">
-
         <div>
-
             <label>मागील रजा संपल्याचा दिनांक (P3):</label>
-
             <input type="date" id="p3_date" onchange="setFirstStartDate()">
-
         </div>
-
         <div>
-
             <label>सुरुवातीची शिल्लक EL (Z3):</label>
-
             <input type="number" step="0.01" id="z3_bal" placeholder="उदा. 10.05">
-
         </div>
-
         <div>
-
             <label>सुरुवातीची शिल्लक ML (AA3):</label>
-
             <input type="number" step="0.01" id="aa3_bal" placeholder="उदा. 5.12">
-
         </div>
-
     </div>
-
-
 
     <div class="entry-box">
-
+        <div><label>सुरवातीचा हजर दिनांक (A):</label><input type="date" id="a_start" readonly></div>
+        <div><label>शेवटचा हजर दिनांक (B):</label><input type="date" id="b_end" onchange="updateLeaveStartDate()"></div>
+        <div><label>बिन पगारी रजा LWP (E):</label><input type="number" id="e_lwp" value="0"></div>
+        <div><label>रजेवर गेल्याचा दिनांक (O):</label><input type="date" id="o_leave_start" readonly></div>
+        <div><label>रजा संपल्याचा दिनांक (P):</label><input type="date" id="p_leave_end"></div>
         <div>
-
-            <label>सुरवातीचा हजर दिनांक (A):</label>
-
-            <input type="date" id="a_start" readonly>
-
-        </div>
-
-        <div>
-
-            <label>शेवटचा हजर दिनांक (B):</label>
-
-            <input type="date" id="b_end" onchange="updateLeaveStartDate()">
-
-        </div>
-
-        <div>
-
-            <label>बिन पगारी रजा LWP (E):</label>
-
-            <input type="number" id="e_lwp" value="0">
-
-        </div>
-
-        <div>
-
-            <label>रजेवर गेल्याचा दिनांक (O):</label>
-
-            <input type="date" id="o_leave_start" readonly>
-
-        </div>
-
-        <div>
-
-            <label>रजा संपल्याचा दिनांक (P):</label>
-
-            <input type="date" id="p_leave_end">
-
-        </div>
-
-        <div>
-
             <label>रजेचा प्रकार (Q):</label>
-
             <select id="q_type">
-
                 <option value="हक्काची रजा">हक्काची रजा</option>
-
                 <option value="वैद्यकीय रजा">वैद्यकीय रजा</option>
-
                 <option value="विशेष रजा">विशेष रजा</option>
-
             </select>
-
         </div>
-
-        <div>
-
+        <div class="btn-group">
             <button class="btn-add" onclick="addEntry()">जतन करा (Save Entry)</button>
-
+            <button class="btn-delete" id="deleteBtn" onclick="deleteLastEntry()" style="display:none;">शेवटची नोंद हटवा</button>
         </div>
-
     </div>
 
-
-
     <h3>नोंदींचा तक्ता (Leave Record Table)</h3>
-
     <table id="recordTable">
-
         <thead>
-
             <tr>
-
                 <th>हजर दिनांक (A-B)</th>
-
                 <th>हजर दिवस (F)</th>
-
                 <th>साठलेली EL (G)</th>
-
                 <th>साठलेली ML (H)</th>
-
                 <th>एकूण साठलेली EL (K)</th>
-
                 <th>एकूण साठलेली ML (L)</th>
-
                 <th>गैरहजर दिनांक (O-P)</th>
-
                 <th>रजा प्रकार (Q)</th>
-
                 <th>रजा दिवस (R)</th>
-
                 <th>अंतिम शिल्लक EL (Z)</th>
-
                 <th>अंतिम शिल्लक ML (AA)</th>
-
             </tr>
-
         </thead>
-
         <tbody></tbody>
-
     </table>
-
 </div>
 
-
-
 <script>
-
-    let currentEL = null;
-
-    let currentML = null;
-
+    let history = []; // नोंदींचा इतिहास साठवण्यासाठी
     let isFirstEntry = true;
-
-
+    let initialValues = {};
 
     function setFirstStartDate() {
-
         if(isFirstEntry) {
-
             let p3Val = document.getElementById('p3_date').value;
-
             if(p3Val) {
-
                 let p3 = new Date(p3Val);
-
                 let nextA = new Date(p3);
-
                 nextA.setDate(nextA.getDate() + 1);
-
                 document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
-
             }
-
         }
-
     }
-
-
 
     function updateLeaveStartDate() {
-
         let bVal = document.getElementById('b_end').value;
-
         if(bVal) {
-
             let bDate = new Date(bVal);
-
             let oDate = new Date(bDate);
-
             oDate.setDate(oDate.getDate() + 1);
-
             document.getElementById('o_leave_start').value = oDate.toISOString().split('T')[0];
-
         }
-
     }
-
-
-
-    // ३६५ आणि १२० ची मर्यादा लावणारे फंक्शन
 
     function applyLimits(val, maxLimit) {
-
         let integerPart = Math.floor(val);
-
         let decimalPart = Math.round((val % 1) * 100) / 100;
-
-        if (integerPart >= maxLimit) {
-
-            return maxLimit + decimalPart;
-
-        }
-
-        return val;
-
+        return (integerPart >= maxLimit) ? maxLimit + decimalPart : val;
     }
-
-
 
     function addEntry() {
-
-        let a = new Date(document.getElementById('a_start').value);
-
-        let b = new Date(document.getElementById('b_end').value);
-
+        let a = document.getElementById('a_start').value;
+        let b = document.getElementById('b_end').value;
         let e = parseFloat(document.getElementById('e_lwp').value) || 0;
-
-        let o = new Date(document.getElementById('o_leave_start').value);
-
-        let p = new Date(document.getElementById('p_leave_end').value);
-
+        let o = document.getElementById('o_leave_start').value;
+        let p = document.getElementById('p_leave_end').value;
         let q = document.getElementById('q_type').value;
 
-
-
-        if (isNaN(a) || isNaN(b) || isNaN(p)) {
-
-            alert("कृपया सर्व तारखा भरा!");
-
-            return;
-
-        }
-
-
+        if (!a || !b || !p) { alert("कृपया सर्व तारखा भरा!"); return; }
 
         if (isFirstEntry) {
-
-            currentEL = parseFloat(document.getElementById('z3_bal').value) || 0;
-
-            currentML = parseFloat(document.getElementById('aa3_bal').value) || 0;
-
+            initialValues = {
+                el: parseFloat(document.getElementById('z3_bal').value) || 0,
+                ml: parseFloat(document.getElementById('aa3_bal').value) || 0,
+                p3: document.getElementById('p3_date').value
+            };
             document.getElementById('p3_date').disabled = true;
-
             document.getElementById('z3_bal').disabled = true;
-
             document.getElementById('aa3_bal').disabled = true;
-
             isFirstEntry = false;
-
         }
 
+        let curEL = history.length > 0 ? history[history.length-1].finalEL : initialValues.el;
+        let curML = history.length > 0 ? history[history.length-1].finalML : initialValues.ml;
 
-
-        // कामाचे दिवस
-
-        let f = (Math.ceil(Math.abs(b - a) / (1000 * 60 * 60 * 24)) + 1) - e;
-
-        
-
-        // साठलेली रजा मोजणी (G आणि H)
-
+        let f = (Math.ceil(Math.abs(new Date(b) - new Date(a)) / (1000 * 60 * 60 * 24)) + 1) - e;
         let g = Math.floor(f / 11) + (f % 11) / 100;
-
         let h = Math.floor(f / 30) + (f % 30) / 100;
 
+        let z3_int = Math.floor(curEL), z3_mod = Math.round((curEL % 1) * 100);
+        let g_int = Math.floor(g), g_mod = Math.round((g % 1) * 100);
+        let k_val = applyLimits(z3_int + g_int + Math.floor((z3_mod + g_mod)/11) + ((z3_mod + g_mod)%11)/100, 365);
 
+        let aa3_int = Math.floor(curML), aa3_mod = Math.round((curML % 1) * 100);
+        let h_int = Math.floor(h), h_mod = Math.round((h % 1) * 100);
+        let l_val = applyLimits(aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100, 120);
 
-        // १. एकूण साठलेली हक्काची रजा (K) - तुमच्या फॉर्म्युल्यानुसार
-
-        let z3_int = Math.floor(currentEL);
-
-        let z3_mod = Math.round((currentEL % 1) * 100);
-
-        let g_int = Math.floor(g);
-
-        let g_mod = Math.round((g % 1) * 100);
-
-        
-
-        let sum_mod_el = z3_mod + g_mod;
-
-        let k_raw = z3_int + g_int + Math.floor(sum_mod_el / 11) + (sum_mod_el % 11) / 100;
-
-        let k_val = applyLimits(Math.max(0, k_raw), 365);
-
-
-
-        // २. एकूण साठलेली मेडिकल रजा (L) - तुमच्या फॉर्म्युल्यानुसार
-
-        let aa3_int = Math.floor(currentML);
-
-        let aa3_mod = Math.round((currentML % 1) * 100);
-
-        let h_int = Math.floor(h);
-
-        let h_mod = Math.round((h % 1) * 100);
-
-        
-
-        let sum_mod_ml = aa3_mod + h_mod;
-
-        let l_raw = aa3_int + h_int + Math.floor(sum_mod_ml / 30) + (sum_mod_ml % 30) / 100;
-
-        let l_val = applyLimits(Math.max(0, l_raw), 120);
-
-
-
-        // घेतलेली रजा (R)
-
-        let r_diff = Math.ceil(Math.abs(p - o) / (1000 * 60 * 60 * 24)) + 1;
-
-
-
-        // ३. अंतिम शिल्लक मोजणी (Z आणि AA)
+        let r_diff = Math.ceil(Math.abs(new Date(p) - new Date(o)) / (1000 * 60 * 60 * 24)) + 1;
 
         let finalEL, finalML;
-
         if (q === "हक्काची रजा") {
-
             finalEL = (r_diff >= Math.floor(k_val)) ? (k_val % 1) : (Math.floor(k_val) - r_diff + (k_val % 1));
-
             finalML = l_val;
-
         } else if (q === "वैद्यकीय रजा") {
-
             finalEL = applyLimits(Math.max(0, Math.floor(k_val) - Math.max(0, r_diff - Math.floor(l_val)) + (k_val % 1)), 365);
-
             finalML = (r_diff >= Math.floor(l_val)) ? (l_val % 1) : (Math.floor(l_val) - r_diff + (l_val % 1));
-
-        } else {
-
-            finalEL = k_val;
-
-            finalML = l_val;
-
-        }
-
-
-
-        // शेवटची मर्यादा पडताळणी
+        } else { finalEL = k_val; finalML = l_val; }
 
         finalEL = applyLimits(finalEL, 365);
-
         finalML = applyLimits(finalML, 120);
 
-
-
-        // तक्त्यात नोंद
-
-        let table = document.getElementById("recordTable").getElementsByTagName('tbody')[0];
-
-        let row = table.insertRow();
-
-        row.innerHTML = `
-
-            <td>${a.toLocaleDateString('en-GB')} - ${b.toLocaleDateString('en-GB')}</td>
-
-            <td>${f}</td>
-
-            <td>${g.toFixed(2)}</td>
-
-            <td>${h.toFixed(2)}</td>
-
-            <td class="accumulated">${k_val.toFixed(2)}</td>
-
-            <td class="accumulated">${l_val.toFixed(2)}</td>
-
-            <td>${o.toLocaleDateString('en-GB')} - ${p.toLocaleDateString('en-GB')}</td>
-
-            <td>${q}</td>
-
-            <td>${r_diff}</td>
-
-            <td class="highlight">${finalEL.toFixed(2)}</td>
-
-            <td class="highlight">${finalML.toFixed(2)}</td>
-
-        `;
-
-
-
-        currentEL = finalEL;
-
-        currentML = finalML;
-
-        let nextA = new Date(p);
-
-        nextA.setDate(nextA.getDate() + 1);
-
-        document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
-
+        history.push({ a, b, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML });
+        renderTable();
         
-
-        document.getElementById('b_end').value = "";
-
-        document.getElementById('o_leave_start').value = "";
-
-        document.getElementById('p_leave_end').value = "";
-
+        let nextA = new Date(p); nextA.setDate(nextA.getDate() + 1);
+        document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
+        document.getElementById('b_end').value = ""; document.getElementById('o_leave_start').value = ""; document.getElementById('p_leave_end').value = "";
+        document.getElementById('deleteBtn').style.display = "inline-block";
     }
 
+    function deleteLastEntry() {
+        if (history.length === 0) return;
+        if (confirm("तुम्हाला खात्री आहे की शेवटची नोंद हटवायची आहे?")) {
+            history.pop();
+            renderTable();
+            if (history.length === 0) {
+                isFirstEntry = true;
+                document.getElementById('p3_date').disabled = false;
+                document.getElementById('z3_bal').disabled = false;
+                document.getElementById('aa3_bal').disabled = false;
+                setFirstStartDate();
+                document.getElementById('deleteBtn').style.display = "none";
+            } else {
+                let lastP = history[history.length-1].p;
+                let nextA = new Date(lastP); nextA.setDate(nextA.getDate() + 1);
+                document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
+            }
+        }
+    }
+
+    function renderTable() {
+        let tbody = document.querySelector("#recordTable tbody");
+        tbody.innerHTML = "";
+        history.forEach(item => {
+            let row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${new Date(item.a).toLocaleDateString('en-GB')} - ${new Date(item.b).toLocaleDateString('en-GB')}</td>
+                <td>${item.f}</td><td>${item.g.toFixed(2)}</td><td>${item.h.toFixed(2)}</td>
+                <td class="accumulated">${item.k_val.toFixed(2)}</td><td class="accumulated">${item.l_val.toFixed(2)}</td>
+                <td>${new Date(item.o).toLocaleDateString('en-GB')} - ${new Date(item.p).toLocaleDateString('en-GB')}</td>
+                <td>${item.q}</td><td>${item.r_diff}</td>
+                <td class="highlight">${item.finalEL.toFixed(2)}</td><td class="highlight">${item.finalML.toFixed(2)}</td>
+            `;
+        });
+    }
 </script>
-
 </body>
-
 </html>
