@@ -2,235 +2,187 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>रजा व्यवस्थापन प्रणाली</title>
+    <title>अग्निशमन रजा नोंद प्रणाली - Continuous</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; }
-        .container { max-width: 900px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: auto; }
-        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
-        .section { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #fafafa; }
-        .section-title { font-weight: bold; color: #555; margin-bottom: 15px; border-left: 5px solid #1a73e8; padding-left: 10px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #333; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background: #fff; }
-        input[readonly] { background-color: #e9ecef; font-weight: bold; }
-        button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.3s; }
-        button:hover { background-color: #1557b0; }
-        .footer-note { font-size: 12px; color: #777; margin-top: 10px; text-align: center; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #fff5f5; padding: 15px; border-radius: 8px; border: 1px solid #ffcdd2; margin-bottom: 20px; }
+        label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-add { background-color: #2e7d32; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        .btn-add:hover { background-color: #1b5e20; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #d32f2f; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .balance-info { background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-around; font-weight: bold; border: 1px solid #bbdefb; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>अग्निशमन रजा नोंद प्रणाली</h2>
+    <h2>अग्निशमन रजा नोंदणी पुस्तिका</h2>
 
-    <div class="section">
-        <div class="section-title">सुरुवातीचा डेटा (Initial Setup - एकदाच भरणे)</div>
-        <div class="grid">
-            <div>
-                <label>मागील रजा संपल्याचा दिनांक (P3):</label>
-                <input type="date" id="p3_prev_end_date" onchange="updateStartDate()">
-            </div>
-            <div>
-                <label>सुरुवातीची शिल्लक हक्काची रजा (Z3):</label>
-                <input type="number" step="0.01" id="z3_bal_el" value="0">
-            </div>
-            <div>
-                <label>सुरुवातीची शिल्लक मेडिकल रजा (AA3):</label>
-                <input type="number" step="0.01" id="aa3_bal_ml" value="0">
-            </div>
+    <div class="balance-info">
+        <span>चालू शिल्लक हक्काची रजा (K4): <span id="cur_el">0.00</span></span>
+        <span>चालू शिल्लक मेडिकल रजा (L4): <span id="cur_ml">0.00</span></span>
+    </div>
+
+    <div class="grid">
+        <div>
+            <label>सुरवातीचा हजर दिनांक (A):</label>
+            <input type="date" id="a_start">
+        </div>
+        <div>
+            <label>शेवटचा हजर दिनांक (B):</label>
+            <input type="date" id="b_end">
+        </div>
+        <div>
+            <label>बिन पगारी रजा LWP (E):</label>
+            <input type="number" id="e_lwp" value="0">
+        </div>
+        <div>
+            <label>रजा संपल्याचा दिनांक (P):</label>
+            <input type="date" id="p_leave_end">
+        </div>
+        <div>
+            <label>रजेचा प्रकार (Q):</label>
+            <select id="q_type">
+                <option value="हक्काची रजा">हक्काची रजा</option>
+                <option value="वैद्यकीय रजा">वैद्यकीय रजा</option>
+                <option value="विशेष रजा">विशेष रजा</option>
+            </select>
+        </div>
+        <div>
+            <label>कृती:</label>
+            <button class="btn-add" onclick="addEntry()">एंट्री जतन करा (Save)</button>
         </div>
     </div>
 
-    <div class="section">
-        <div class="section-title">हजर दिवसांचा हिशोब</div>
-        <div class="grid">
-            <div>
-                <label>सुरवातीचा हजर दिनांक (A4):</label>
-                <input type="date" id="a4_start_date" readonly>
-            </div>
-            <div>
-                <label>शेवटचा हजर दिनांक (B4):</label>
-                <input type="date" id="b4_end_date" onchange="calculateLogic()">
-            </div>
-            <div>
-                <label>Year-end / Regular (C4):</label>
-                <select id="c4_type">
-                    <option value="Regular">Regular</option>
-                    <option value="Year-end">Year-end</option>
-                </select>
-            </div>
-            <div>
-                <label>एकूण हजर दिवस (D4):</label>
-                <input type="number" id="d4_total_days" readonly>
-            </div>
-            <div>
-                <label>बिन पगारी रजा LWP (E4):</label>
-                <input type="number" id="e4_lwp" value="0" oninput="calculateLogic()">
-            </div>
-            <div>
-                <label>निव्वळ हजर दिवस (F4):</label>
-                <input type="number" id="f4_net_days" readonly>
-            </div>
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">साठलेली रजा (Formulas G, H, K, L)</div>
-        <div class="grid">
-            <div>
-                <label>साठलेली हक्काची रजा (G4):</label>
-                <input type="text" id="g4_earned" readonly>
-            </div>
-            <div>
-                <label>साठलेली मेडिकल रजा (H4):</label>
-                <input type="text" id="h4_medical" readonly>
-            </div>
-            <div>
-                <label>एकूण साठलेली EL (K4):</label>
-                <input type="text" id="k4_total_el" readonly>
-            </div>
-            <div>
-                <label>एकूण साठलेली ML (L4):</label>
-                <input type="text" id="l4_total_ml" readonly>
-            </div>
-        </div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">रजेचा तपशील</div>
-        <div class="grid">
-            <div>
-                <label>रजेवर गेल्याचा दिनांक (O4):</label>
-                <input type="date" id="o4_leave_start" readonly>
-            </div>
-            <div>
-                <label>रजा संपल्याचा दिनांक (P4):</label>
-                <input type="date" id="p4_leave_end" onchange="calculateLogic()">
-            </div>
-            <div>
-                <label>रजेचा प्रकार (Q4):</label>
-                <select id="q4_leave_type" onchange="calculateLogic()">
-                    <option value="हक्काची रजा">हक्काची रजा</option>
-                    <option value="वैद्यकीय रजा">वैद्यकीय रजा</option>
-                    <option value="विशेष रजा">विशेष रजा</option>
-                </select>
-            </div>
-            <div>
-                <label>घेतलेल्या रजेचे दिवस (R4):</label>
-                <input type="number" id="r4_leave_days" readonly>
-            </div>
-        </div>
-    </div>
-
-    <div class="section" style="background: #e7f3ff;">
-        <div class="section-title">अंतिम शिल्लक (Final Balance)</div>
-        <div class="grid">
-            <div>
-                <label style="color: blue;">शिल्लक हक्काची रजा (Z4):</label>
-                <input type="text" id="z4_final_el" readonly>
-            </div>
-            <div>
-                <label style="color: blue;">शिल्लक मेडिकल रजा (AA4):</label>
-                <input type="text" id="aa4_final_ml" readonly>
-            </div>
-        </div>
-    </div>
-
-    <button onclick="window.print()">रिपोर्ट प्रिंट करा</button>
-    <p class="footer-note">टीप: हे सॉफ्टवेअर तुमच्या Excel फॉर्म्युल्यानुसार मोजणी करते.</p>
+    <h3>नोंदींचा तक्ता (Leave Record Table)</h3>
+    <table id="recordTable">
+        <thead>
+            <tr>
+                <th>हजर दिनांक (A-B)</th>
+                <th>हजर दिवस (F)</th>
+                <th>साठलेली EL (G)</th>
+                <th>साठलेली ML (H)</th>
+                <th>रजा प्रकार (Q)</th>
+                <th>रजा दिवस (R)</th>
+                <th>शिल्लक EL (Z)</th>
+                <th>शिल्लक ML (AA)</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+    
+    <button onclick="window.print()" style="margin-top:20px; padding: 10px;">प्रिंट काढा</button>
 </div>
 
 <script>
-    function updateStartDate() {
-        const p3Date = document.getElementById('p3_prev_end_date').value;
-        if (p3Date) {
-            let nextDay = new Date(p3Date);
-            nextDay.setDate(nextDay.getDate() + 1);
-            document.getElementById('a4_start_date').value = nextDay.toISOString().split('T')[0];
-        }
-        calculateLogic();
-    }
+    // सुरुवातीची सेटिंग्ज (ही तुमच्या गरजेनुसार बदलू शकता)
+    let currentEL = 0.00; 
+    let currentML = 0.00;
 
-    function calculateLogic() {
-        // १. तारखांमधील फरक मोजणे
-        const a4 = new Date(document.getElementById('a4_start_date').value);
-        const b4 = new Date(document.getElementById('b4_end_date').value);
+    // पेज लोड झाल्यावर यूजरला सुरुवातीचा बॅलन्स विचारणे (फक्त पहिल्यांदा)
+    window.onload = function() {
+        let startEL = prompt("सुरुवातीची शिल्लक हक्काची रजा (Z3) टाका:", "0");
+        let startML = prompt("सुरुवातीची शिल्लक मेडिकल रजा (AA3) टाका:", "0");
+        let lastDate = prompt("मागील रजा संपल्याचा दिनांक (P3) टाका (YYYY-MM-DD):", "2024-01-01");
         
-        if (a4 && b4 && b4 >= a4) {
-            const diffTime = Math.abs(b4 - a4);
-            const d4 = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            document.getElementById('d4_total_days').value = d4;
+        currentEL = parseFloat(startEL) || 0;
+        currentML = parseFloat(startML) || 0;
+        
+        document.getElementById('cur_el').innerText = currentEL.toFixed(2);
+        document.getElementById('cur_ml').innerText = currentML.toFixed(2);
+        
+        // पुढचा हजर दिनांक सेट करणे
+        let nextDay = new Date(lastDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        document.getElementById('a_start').value = nextDay.toISOString().split('T')[0];
+    };
 
-            const e4 = parseFloat(document.getElementById('e4_lwp').value) || 0;
-            const f4 = d4 - e4;
-            document.getElementById('f4_net_days').value = f4;
+    function addEntry() {
+        let a = new Date(document.getElementById('a_start').value);
+        let b = new Date(document.getElementById('b_end').value);
+        let e = parseFloat(document.getElementById('e_lwp').value) || 0;
+        let p = new Date(document.getElementById('p_leave_end').value);
+        let q = document.getElementById('q_type').value;
 
-            // G4 formula: INT(F4/11) + MOD(F4,11)/100
-            let g4 = Math.floor(f4 / 11) + (f4 % 11) / 100;
-            document.getElementById('g4_earned').value = g4.toFixed(2);
-
-            // H4 formula: INT(F4/30) + MOD(F4,30)/100
-            let h4 = Math.floor(f4 / 30) + (f4 % 30) / 100;
-            document.getElementById('h4_medical').value = h4.toFixed(2);
-
-            // K4 & L4 Calculation (Complex logic for fractional leave)
-            let z3 = parseFloat(document.getElementById('z3_bal_el').value) || 0;
-            let aa3 = parseFloat(document.getElementById('aa3_bal_ml').value) || 0;
-
-            // K4 Formula implementation
-            let z3_int = Math.floor(z3);
-            let z3_mod = Math.round((z3 % 1) * 100);
-            let g4_int = Math.floor(g4);
-            let g4_mod = Math.round((g4 % 1) * 100);
-            
-            let k4_val = Math.min(365, z3_int + g4_int + Math.floor((z3_mod + g4_mod)/11) + ((z3_mod + g4_mod)%11)/100);
-            document.getElementById('k4_total_el').value = k4_val.toFixed(2);
-
-            // L4 Formula implementation
-            let aa3_int = Math.floor(aa3);
-            let aa3_mod = Math.round((aa3 % 1) * 100);
-            let h4_int = Math.floor(h4);
-            let h4_mod = Math.round((h4 % 1) * 100);
-
-            let l4_val = Math.min(120, aa3_int + h4_int + Math.floor((aa3_mod + h4_mod)/30) + ((aa3_mod + h4_mod)%30)/100);
-            document.getElementById('l4_total_ml').value = l4_val.toFixed(2);
-
-            // O4 logic: B4 + 1
-            let o4Date = new Date(b4);
-            o4Date.setDate(o4Date.getDate() + 1);
-            document.getElementById('o4_leave_start').value = o4Date.toISOString().split('T')[0];
-
-            // R4 Calculation
-            const p4 = new Date(document.getElementById('p4_leave_end').value);
-            if (p4 && p4 >= o4Date) {
-                const leaveDiff = Math.abs(p4 - o4Date);
-                const r4 = Math.ceil(leaveDiff / (1000 * 60 * 60 * 24)) + 1;
-                document.getElementById('r4_leave_days').value = r4;
-
-                // Final Balances Z4 and AA4
-                const q4 = document.getElementById('q4_leave_type').value;
-                let z4, aa4;
-
-                // Z4 logic
-                if (q4 === "हक्काची रजा") {
-                    z4 = (r4 >= Math.floor(k4_val)) ? (k4_val % 1) : (Math.floor(k4_val) - r4 + (k4_val % 1));
-                } else if (q4 === "वैद्यकीय रजा") {
-                    z4 = Math.min(365, Math.max(0, Math.floor(k4_val) - Math.max(0, r4 - Math.floor(l4_val)) + (k4_val % 1)));
-                } else {
-                    z4 = k4_val;
-                }
-
-                // AA4 logic
-                if (q4 === "वैद्यकीय रजा") {
-                    aa4 = (r4 >= Math.floor(l4_val)) ? (l4_val % 1) : (Math.floor(l4_val) - r4 + (l4_val % 1));
-                } else {
-                    aa4 = l4_val;
-                }
-
-                document.getElementById('z4_final_el').value = z4.toFixed(2);
-                document.getElementById('aa4_final_ml').value = aa4.toFixed(2);
-            }
+        if (isNaN(a) || isNaN(b) || isNaN(p)) {
+            alert("कृपया सर्व तारखा अचूक भरा!");
+            return;
         }
+
+        // १. हजर दिवसांचा हिशोब (D आणि F)
+        let diff = Math.ceil(Math.abs(b - a) / (1000 * 60 * 60 * 24)) + 1;
+        let f = diff - e;
+
+        // २. साठलेली रजा (G आणि H) - तुमच्या ११ आणि ३० दिवसांच्या फॉर्म्युल्यानुसार
+        let g = Math.floor(f / 11) + (f % 11) / 100;
+        let h = Math.floor(f / 30) + (f % 30) / 100;
+
+        // ३. एकूण साठलेली रजा (K आणि L प्रमाणे)
+        let z3_int = Math.floor(currentEL);
+        let z3_mod = Math.round((currentEL % 1) * 100);
+        let g_int = Math.floor(g);
+        let g_mod = Math.round((g % 1) * 100);
+        let k_val = Math.min(365, z3_int + g_int + Math.floor((z3_mod + g_mod)/11) + ((z3_mod + g_mod)%11)/100);
+
+        let aa3_int = Math.floor(currentML);
+        let aa3_mod = Math.round((currentML % 1) * 100);
+        let h_int = Math.floor(h);
+        let h_mod = Math.round((h % 1) * 100);
+        let l_val = Math.min(120, aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100);
+
+        // ४. घेतलेली रजा (R)
+        let o = new Date(b);
+        o.setDate(o.getDate() + 1);
+        let r_diff = Math.ceil(Math.abs(p - o) / (1000 * 60 * 60 * 24)) + 1;
+
+        // ५. नवीन शिल्लक रजा (Z आणि AA प्रमाणे)
+        let finalEL, finalML;
+        if (q === "हक्काची रजा") {
+            finalEL = (r_diff >= Math.floor(k_val)) ? (k_val % 1) : (Math.floor(k_val) - r_diff + (k_val % 1));
+            finalML = l_val;
+        } else if (q === "वैद्यकीय रजा") {
+            finalEL = Math.min(365, Math.max(0, Math.floor(k_val) - Math.max(0, r_diff - Math.floor(l_val)) + (k_val % 1)));
+            finalML = (r_diff >= Math.floor(l_val)) ? (l_val % 1) : (Math.floor(l_val) - r_diff + (l_val % 1));
+        } else {
+            finalEL = k_val;
+            finalML = l_val;
+        }
+
+        // ६. तक्त्यात माहिती भरणे
+        let table = document.getElementById("recordTable").getElementsByTagName('tbody')[0];
+        let row = table.insertRow();
+        row.innerHTML = `
+            <td>${a.toLocaleDateString('en-GB')} - ${b.toLocaleDateString('en-GB')}</td>
+            <td>${f}</td>
+            <td>${g.toFixed(2)}</td>
+            <td>${h.toFixed(2)}</td>
+            <td>${q}</td>
+            <td>${r_diff}</td>
+            <td>${finalEL.toFixed(2)}</td>
+            <td>${finalML.toFixed(2)}</td>
+        `;
+
+        // ७. पुढच्या एंट्रीसाठी सेटिंग्ज अपडेट करणे
+        currentEL = finalEL;
+        currentML = finalML;
+        document.getElementById('cur_el').innerText = currentEL.toFixed(2);
+        document.getElementById('cur_ml').innerText = currentML.toFixed(2);
+
+        // पुढचा हजर दिनांक = रजा संपल्याचा दिनांक + १
+        let nextA = new Date(p);
+        nextA.setDate(nextA.getDate() + 1);
+        document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
+        
+        // इतर फील्ड रिकामी करणे
+        document.getElementById('b_end').value = "";
+        document.getElementById('p_leave_end').value = "";
     }
 </script>
 
