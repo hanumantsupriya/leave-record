@@ -2,22 +2,22 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>पुणे महानगरपालिका रजा नोंद प्रणाली - अंतिम मर्यादा दुरुस्ती</title>
+    <title>पुणे महानगरपालिका रजा नोंद प्रणाली</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
         .container { max-width: 1250px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 10px; }
+        h2 { text-align: center; color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
         .setup-box { background: #e3f2fd; padding: 15px; border-radius: 8px; border: 1px solid #bbdefb; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .entry-box { background: #fff5f5; padding: 15px; border-radius: 8px; border: 1px solid #ffcdd2; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .entry-box { background: #fffde7; padding: 15px; border-radius: 8px; border: 1px solid #fbc02d; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
         label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #333; }
         input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         input:disabled, input[readonly] { background-color: #eee; color: #555; }
-        .btn-add { background-color: #2e7d32; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 18px; }
-        .btn-add:hover { background-color: #1b5e20; }
+        .btn-add { background-color: #1a73e8; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 18px; }
+        .btn-add:hover { background-color: #1557b0; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #d32f2f; color: white; }
-        .highlight { font-weight: bold; color: #d32f2f; background: #fff9c4; border: 1px solid #fbc02d !important; }
+        th { background-color: #1a73e8; color: white; }
+        .highlight { font-weight: bold; color: #1a73e8; background: #e8f0fe; border: 1px solid #1a73e8 !important; }
     </style>
 </head>
 <body>
@@ -74,6 +74,7 @@
         </div>
     </div>
 
+    <h3>नोंदींचा तक्ता (Leave Record Table)</h3>
     <table id="recordTable">
         <thead>
             <tr>
@@ -119,7 +120,7 @@
         }
     }
 
-    // ३६५ आणि १२० ची मर्यादा लावणारे खास फंक्शन
+    // ३६५ आणि १२० ची मर्यादा लावणारे फंक्शन
     function applyLimits(val, maxLimit) {
         let integerPart = Math.floor(val);
         let decimalPart = val % 1;
@@ -151,65 +152,4 @@
             isFirstEntry = false;
         }
 
-        let f = (Math.ceil(Math.abs(b - a) / (1000 * 60 * 60 * 24)) + 1) - e;
-        let g = Math.floor(f / 11) + (f % 11) / 100;
-        let h = Math.floor(f / 30) + (f % 30) / 100;
-
-        // एकूण साठलेली रजा (K आणि L) - मर्यादा लागू केली
-        let z3_int = Math.floor(currentEL);
-        let z3_mod = Math.round((currentEL % 1) * 100);
-        let g_int = Math.floor(g);
-        let g_mod = Math.round((g % 1) * 100);
-        let k_val = applyLimits(z3_int + g_int + Math.floor((z3_mod + g_mod)/11) + ((z3_mod + g_mod)%11)/100, 365);
-
-        let aa3_int = Math.floor(currentML);
-        let aa3_mod = Math.round((currentML % 1) * 100);
-        let h_int = Math.floor(h);
-        let h_mod = Math.round((h % 1) * 100);
-        let l_val = applyLimits(aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100, 120);
-
-        let r_diff = Math.ceil(Math.abs(p - o) / (1000 * 60 * 60 * 24)) + 1;
-
-        // अंतिम शिल्लक मोजणी (Z आणि AA)
-        let finalEL, finalML;
-        if (q === "हक्काची रजा") {
-            finalEL = (r_diff >= Math.floor(k_val)) ? (k_val % 1) : (Math.floor(k_val) - r_diff + (k_val % 1));
-            finalML = l_val;
-        } else if (q === "वैद्यकीय रजा") {
-            finalEL = applyLimits(Math.max(0, Math.floor(k_val) - Math.max(0, r_diff - Math.floor(l_val)) + (k_val % 1)), 365);
-            finalML = (r_diff >= Math.floor(l_val)) ? (l_val % 1) : (Math.floor(l_val) - r_diff + (l_val % 1));
-        } else {
-            finalEL = k_val;
-            finalML = l_val;
-        }
-
-        // शेवटची पडताळणी (Final Check for limits)
-        finalEL = applyLimits(finalEL, 365);
-        finalML = applyLimits(finalML, 120);
-
-        let table = document.getElementById("recordTable").getElementsByTagName('tbody')[0];
-        let row = table.insertRow();
-        row.innerHTML = `
-            <td>${a.toLocaleDateString('en-GB')} - ${b.toLocaleDateString('en-GB')}</td>
-            <td>${f}</td>
-            <td>${g.toFixed(2)}</td>
-            <td>${h.toFixed(2)}</td>
-            <td>${o.toLocaleDateString('en-GB')} - ${p.toLocaleDateString('en-GB')}</td>
-            <td>${q}</td>
-            <td>${r_diff}</td>
-            <td class="highlight">${finalEL.toFixed(2)}</td>
-            <td class="highlight">${finalML.toFixed(2)}</td>
-        `;
-
-        currentEL = finalEL;
-        currentML = finalML;
-        let nextA = new Date(p);
-        nextA.setDate(nextA.getDate() + 1);
-        document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
-        document.getElementById('b_end').value = "";
-        document.getElementById('o_leave_start').value = "";
-        document.getElementById('p_leave_end').value = "";
-    }
-</script>
-</body>
-</html>
+        let f = (Math.ceil(Math.abs(
