@@ -2,21 +2,27 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>अग्निशमन रजा नोंद प्रणाली - Continuous</title>
+    <title>अग्निशमन रजा नोंद प्रणाली</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
         .container { max-width: 1100px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #d32f2f; border-bottom: 2px solid #d32f2f; padding-bottom: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #fff5f5; padding: 15px; border-radius: 8px; border: 1px solid #ffcdd2; margin-bottom: 20px; }
-        label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; }
+        
+        .setup-box { background: #e3f2fd; padding: 15px; border-radius: 8px; border: 1px solid #bbdefb; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .entry-box { background: #fff5f5; padding: 15px; border-radius: 8px; border: 1px solid #ffcdd2; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        
+        label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #333; }
         input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-add { background-color: #2e7d32; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        input:disabled { background-color: #eee; color: #777; }
+
+        .btn-add { background-color: #2e7d32; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 18px; }
         .btn-add:hover { background-color: #1b5e20; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #d32f2f; color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
-        .balance-info { background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-around; font-weight: bold; border: 1px solid #bbdefb; }
+        .highlight { font-weight: bold; color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -24,15 +30,25 @@
 <div class="container">
     <h2>अग्निशमन रजा नोंदणी पुस्तिका</h2>
 
-    <div class="balance-info">
-        <span>चालू शिल्लक हक्काची रजा (K4): <span id="cur_el">0.00</span></span>
-        <span>चालू शिल्लक मेडिकल रजा (L4): <span id="cur_ml">0.00</span></span>
+    <div class="setup-box" id="initialSetup">
+        <div>
+            <label>मागील रजा संपल्याचा दिनांक (P3):</label>
+            <input type="date" id="p3_date" onchange="setFirstStartDate()">
+        </div>
+        <div>
+            <label>सुरुवातीची शिल्लक EL (Z3):</label>
+            <input type="number" step="0.01" id="z3_bal" placeholder="उदा. 10.05">
+        </div>
+        <div>
+            <label>सुरुवातीची शिल्लक ML (AA3):</label>
+            <input type="number" step="0.01" id="aa3_bal" placeholder="उदा. 5.12">
+        </div>
     </div>
 
-    <div class="grid">
+    <div class="entry-box">
         <div>
             <label>सुरवातीचा हजर दिनांक (A):</label>
-            <input type="date" id="a_start">
+            <input type="date" id="a_start" readonly>
         </div>
         <div>
             <label>शेवटचा हजर दिनांक (B):</label>
@@ -55,8 +71,7 @@
             </select>
         </div>
         <div>
-            <label>कृती:</label>
-            <button class="btn-add" onclick="addEntry()">एंट्री जतन करा (Save)</button>
+            <button class="btn-add" onclick="addEntry()">जतन करा (Save Entry)</button>
         </div>
     </div>
 
@@ -70,39 +85,27 @@
                 <th>साठलेली ML (H)</th>
                 <th>रजा प्रकार (Q)</th>
                 <th>रजा दिवस (R)</th>
-                <th>शिल्लक EL (Z)</th>
-                <th>शिल्लक ML (AA)</th>
+                <th>अंतिम शिल्लक EL (Z)</th>
+                <th>अंतिम शिल्लक ML (AA)</th>
             </tr>
         </thead>
-        <tbody>
-            </tbody>
+        <tbody></tbody>
     </table>
-    
-    <button onclick="window.print()" style="margin-top:20px; padding: 10px;">प्रिंट काढा</button>
 </div>
 
 <script>
-    // सुरुवातीची सेटिंग्ज (ही तुमच्या गरजेनुसार बदलू शकता)
-    let currentEL = 0.00; 
-    let currentML = 0.00;
+    let currentEL = null;
+    let currentML = null;
+    let isFirstEntry = true;
 
-    // पेज लोड झाल्यावर यूजरला सुरुवातीचा बॅलन्स विचारणे (फक्त पहिल्यांदा)
-    window.onload = function() {
-        let startEL = prompt("सुरुवातीची शिल्लक हक्काची रजा (Z3) टाका:", "0");
-        let startML = prompt("सुरुवातीची शिल्लक मेडिकल रजा (AA3) टाका:", "0");
-        let lastDate = prompt("मागील रजा संपल्याचा दिनांक (P3) टाका (YYYY-MM-DD):", "2024-01-01");
-        
-        currentEL = parseFloat(startEL) || 0;
-        currentML = parseFloat(startML) || 0;
-        
-        document.getElementById('cur_el').innerText = currentEL.toFixed(2);
-        document.getElementById('cur_ml').innerText = currentML.toFixed(2);
-        
-        // पुढचा हजर दिनांक सेट करणे
-        let nextDay = new Date(lastDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        document.getElementById('a_start').value = nextDay.toISOString().split('T')[0];
-    };
+    function setFirstStartDate() {
+        if(isFirstEntry) {
+            let p3 = new Date(document.getElementById('p3_date').value);
+            let nextA = new Date(p3);
+            nextA.setDate(nextA.getDate() + 1);
+            document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
+        }
+    }
 
     function addEntry() {
         let a = new Date(document.getElementById('a_start').value);
@@ -112,19 +115,29 @@
         let q = document.getElementById('q_type').value;
 
         if (isNaN(a) || isNaN(b) || isNaN(p)) {
-            alert("कृपया सर्व तारखा अचूक भरा!");
+            alert("कृपया सर्व तारखा भरा!");
             return;
         }
 
-        // १. हजर दिवसांचा हिशोब (D आणि F)
+        // पहिल्या एंट्रीच्या वेळी सुरुवातीचा बॅलन्स लॉक करणे
+        if (isFirstEntry) {
+            currentEL = parseFloat(document.getElementById('z3_bal').value) || 0;
+            currentML = parseFloat(document.getElementById('aa3_bal').value) || 0;
+            
+            // इनपुट लॉक करणे
+            document.getElementById('p3_date').disabled = true;
+            document.getElementById('z3_bal').disabled = true;
+            document.getElementById('aa3_bal').disabled = true;
+            isFirstEntry = false;
+        }
+
+        // हिशोब लॉजिक (Excel नुसार)
         let diff = Math.ceil(Math.abs(b - a) / (1000 * 60 * 60 * 24)) + 1;
         let f = diff - e;
 
-        // २. साठलेली रजा (G आणि H) - तुमच्या ११ आणि ३० दिवसांच्या फॉर्म्युल्यानुसार
         let g = Math.floor(f / 11) + (f % 11) / 100;
         let h = Math.floor(f / 30) + (f % 30) / 100;
 
-        // ३. एकूण साठलेली रजा (K आणि L प्रमाणे)
         let z3_int = Math.floor(currentEL);
         let z3_mod = Math.round((currentEL % 1) * 100);
         let g_int = Math.floor(g);
@@ -137,12 +150,10 @@
         let h_mod = Math.round((h % 1) * 100);
         let l_val = Math.min(120, aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100);
 
-        // ४. घेतलेली रजा (R)
         let o = new Date(b);
         o.setDate(o.getDate() + 1);
         let r_diff = Math.ceil(Math.abs(p - o) / (1000 * 60 * 60 * 24)) + 1;
 
-        // ५. नवीन शिल्लक रजा (Z आणि AA प्रमाणे)
         let finalEL, finalML;
         if (q === "हक्काची रजा") {
             finalEL = (r_diff >= Math.floor(k_val)) ? (k_val % 1) : (Math.floor(k_val) - r_diff + (k_val % 1));
@@ -155,7 +166,7 @@
             finalML = l_val;
         }
 
-        // ६. तक्त्यात माहिती भरणे
+        // टेबलमध्ये रो जोडणे
         let table = document.getElementById("recordTable").getElementsByTagName('tbody')[0];
         let row = table.insertRow();
         row.innerHTML = `
@@ -165,26 +176,21 @@
             <td>${h.toFixed(2)}</td>
             <td>${q}</td>
             <td>${r_diff}</td>
-            <td>${finalEL.toFixed(2)}</td>
-            <td>${finalML.toFixed(2)}</td>
+            <td class="highlight">${finalEL.toFixed(2)}</td>
+            <td class="highlight">${finalML.toFixed(2)}</td>
         `;
 
-        // ७. पुढच्या एंट्रीसाठी सेटिंग्ज अपडेट करणे
+        // बॅलन्स अपडेट आणि पुढील तारीख सेट करणे
         currentEL = finalEL;
         currentML = finalML;
-        document.getElementById('cur_el').innerText = currentEL.toFixed(2);
-        document.getElementById('cur_ml').innerText = currentML.toFixed(2);
-
-        // पुढचा हजर दिनांक = रजा संपल्याचा दिनांक + १
         let nextA = new Date(p);
         nextA.setDate(nextA.getDate() + 1);
         document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
         
-        // इतर फील्ड रिकामी करणे
+        // फॉर्म क्लिअर करणे
         document.getElementById('b_end').value = "";
         document.getElementById('p_leave_end').value = "";
     }
 </script>
-
 </body>
 </html>
