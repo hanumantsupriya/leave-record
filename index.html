@@ -14,15 +14,11 @@
         input:disabled, input[readonly] { background-color: #eee; color: #555; }
         .btn-group { display: flex; gap: 10px; margin-top: 18px; }
         .btn-add { background-color: #1a73e8; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; flex: 2; font-size: 16px; font-weight: bold; }
-        .btn-delete { background-color: #d32f2f; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; flex: 1; font-size: 14px; font-weight: bold; }
-        .btn-add:hover { background-color: #1557b0; }
-        .btn-delete:hover { background-color: #b71c1c; }
+        .btn-delete { background-color: #d32f2f; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; flex: 1; font-size: 14px; font-weight: bold; display: none; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
         th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
         th { background-color: #1a73e8; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
         .highlight { font-weight: bold; color: #1a73e8; background: #e8f0fe; }
-        .accumulated { color: #2e7d32; font-weight: bold; background: #f1f8e9; }
     </style>
 </head>
 <body>
@@ -37,11 +33,11 @@
         </div>
         <div>
             <label>सुरुवातीची शिल्लक EL (Z3):</label>
-            <input type="number" step="0.01" id="z3_bal" placeholder="उदा. 10.05">
+            <input type="number" step="0.01" id="z3_bal">
         </div>
         <div>
             <label>सुरुवातीची शिल्लक ML (AA3):</label>
-            <input type="number" step="0.01" id="aa3_bal" placeholder="उदा. 5.12">
+            <input type="number" step="0.01" id="aa3_bal">
         </div>
     </div>
 
@@ -61,11 +57,10 @@
         </div>
         <div class="btn-group">
             <button class="btn-add" onclick="addEntry()">जतन करा (Save Entry)</button>
-            <button class="btn-delete" id="deleteBtn" onclick="deleteLastEntry()" style="display:none;">शेवटची नोंद हटवा</button>
+            <button id="delBtn" class="btn-delete" onclick="deleteLastRow()">शेवटची नोंद हटवा</button>
         </div>
     </div>
 
-    <h3>नोंदींचा तक्ता (Leave Record Table)</h3>
     <table id="recordTable">
         <thead>
             <tr>
@@ -87,106 +82,44 @@
 </div>
 
 <script>
-    let history = []; // नोंदींचा इतिहास साठवण्यासाठी
-    let isFirstEntry = true;
-    let initialValues = {};
+    let currentEL = null, currentML = null, isFirst = true, prevP = null;
+    let lastEL = null, lastML = null; // मागील बॅलन्स साठवण्यासाठी
 
     function setFirstStartDate() {
-        if(isFirstEntry) {
-            let p3Val = document.getElementById('p3_date').value;
-            if(p3Val) {
-                let p3 = new Date(p3Val);
-                let nextA = new Date(p3);
-                nextA.setDate(nextA.getDate() + 1);
-                document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
-            }
+        let p3 = document.getElementById('p3_date').value;
+        if(p3 && isFirst) {
+            let nextA = new Date(p3); nextA.setDate(nextA.getDate() + 1);
+            document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
         }
     }
 
     function updateLeaveStartDate() {
-        let bVal = document.getElementById('b_end').value;
-        if(bVal) {
-            let bDate = new Date(bVal);
-            let oDate = new Date(bDate);
-            oDate.setDate(oDate.getDate() + 1);
-            document.getElementById('o_leave_start').value = oDate.toISOString().split('T')[0];
+        let b = document.getElementById('b_end').value;
+        if(b) {
+            let o = new Date(b); o.setDate(o.getDate() + 1);
+            document.getElementById('o_leave_start').value = o.toISOString().split('T')[0];
         }
     }
 
-    function applyLimits(val, maxLimit) {
-        let integerPart = Math.floor(val);
-        let decimalPart = Math.round((val % 1) * 100) / 100;
-        return (integerPart >= maxLimit) ? maxLimit + decimalPart : val;
+    function applyLimits(val, max) {
+        return (Math.floor(val) >= max) ? max + (val % 1) : val;
     }
 
     function addEntry() {
-        let a = document.getElementById('a_start').value;
-        let b = document.getElementById('b_end').value;
-        let e = parseFloat(document.getElementById('e_lwp').value) || 0;
-        let o = document.getElementById('o_leave_start').value;
-        let p = document.getElementById('p_leave_end').value;
-        let q = document.getElementById('q_type').value;
+        let a = document.getElementById('a_start').value, b = document.getElementById('b_end').value, p = document.getElementById('p_leave_end').value;
+        if(!a || !b || !p) { alert("माहिती भरा"); return; }
 
-        if (!a || !b || !p) { alert("कृपया सर्व तारखा भरा!"); return; }
-
-        if (isFirstEntry) {
-            initialValues = {
-                el: parseFloat(document.getElementById('z3_bal').value) || 0,
-                ml: parseFloat(document.getElementById('aa3_bal').value) || 0,
-                p3: document.getElementById('p3_date').value
-            };
-            document.getElementById('p3_date').disabled = true;
-            document.getElementById('z3_bal').disabled = true;
-            document.getElementById('aa3_bal').disabled = true;
-            isFirstEntry = false;
+        if(isFirst) {
+            currentEL = parseFloat(document.getElementById('z3_bal').value) || 0;
+            currentML = parseFloat(document.getElementById('aa3_bal').value) || 0;
+            prevP = document.getElementById('p3_date').value;
+            document.getElementById('initialSetup').style.opacity = "0.5";
+            document.getElementById('p3_date').disabled = document.getElementById('z3_bal').disabled = document.getElementById('aa3_bal').disabled = true;
+            isFirst = false;
         }
 
-        let curEL = history.length > 0 ? history[history.length-1].finalEL : initialValues.el;
-        let curML = history.length > 0 ? history[history.length-1].finalML : initialValues.ml;
-
-        let f = (Math.ceil(Math.abs(new Date(b) - new Date(a)) / (1000 * 60 * 60 * 24)) + 1) - e;
-        let g = Math.floor(f / 11) + (f % 11) / 100;
-        let h = Math.floor(f / 30) + (f % 30) / 100;
-
-        let z3_int = Math.floor(curEL), z3_mod = Math.round((curEL % 1) * 100);
-        let g_int = Math.floor(g), g_mod = Math.round((g % 1) * 100);
-        let k_val = applyLimits(z3_int + g_int + Math.floor((z3_mod + g_mod)/11) + ((z3_mod + g_mod)%11)/100, 365);
-
-        let aa3_int = Math.floor(curML), aa3_mod = Math.round((curML % 1) * 100);
-        let h_int = Math.floor(h), h_mod = Math.round((h % 1) * 100);
-        let l_val = applyLimits(aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100, 120);
-
-        let r_diff = Math.ceil(Math.abs(new Date(p) - new Date(o)) / (1000 * 60 * 60 * 24)) + 1;
-
-        let finalEL, finalML;
-        if (q === "हक्काची रजा") {
-            finalEL = (r_diff >= Math.floor(k_val)) ? (k_val % 1) : (Math.floor(k_val) - r_diff + (k_val % 1));
-            finalML = l_val;
-        } else if (q === "वैद्यकीय रजा") {
-            finalEL = applyLimits(Math.max(0, Math.floor(k_val) - Math.max(0, r_diff - Math.floor(l_val)) + (k_val % 1)), 365);
-            finalML = (r_diff >= Math.floor(l_val)) ? (l_val % 1) : (Math.floor(l_val) - r_diff + (l_val % 1));
-        } else { finalEL = k_val; finalML = l_val; }
-
-        finalEL = applyLimits(finalEL, 365);
-        finalML = applyLimits(finalML, 120);
-
-        history.push({ a, b, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML });
-        renderTable();
+        lastEL = currentEL; lastML = currentML; // बॅलन्स बॅकअप
+        let f = (Math.ceil(Math.abs(new Date(b) - new Date(a)) / 86400000) + 1) - (parseFloat(document.getElementById('e_lwp').value) || 0);
+        let g = Math.floor(f/11) + (f%11)/100, h = Math.floor(f/30) + (f%30)/100;
         
-        let nextA = new Date(p); nextA.setDate(nextA.getDate() + 1);
-        document.getElementById('a_start').value = nextA.toISOString().split('T')[0];
-        document.getElementById('b_end').value = ""; document.getElementById('o_leave_start').value = ""; document.getElementById('p_leave_end').value = "";
-        document.getElementById('deleteBtn').style.display = "inline-block";
-    }
-
-    function deleteLastEntry() {
-        if (history.length === 0) return;
-        if (confirm("तुम्हाला खात्री आहे की शेवटची नोंद हटवायची आहे?")) {
-            history.pop();
-            renderTable();
-            if (history.length === 0) {
-                isFirstEntry = true;
-                document.getElementById('p3_date').disabled = false;
-                document.getElementById('z3_bal').disabled = false;
-                document.getElementById('aa3_bal').disabled = false;
-                setFirstStartDate();
+        let k = applyLimits(Math
