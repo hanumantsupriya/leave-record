@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <title>रजा व्यवस्थापन प्रणाली</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 900px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: auto; }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+        .section { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #fafafa; }
+        .section-title { font-weight: bold; color: #555; margin-bottom: 15px; border-left: 5px solid #1a73e8; padding-left: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #333; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background: #fff; }
+        input[readonly] { background-color: #e9ecef; font-weight: bold; }
+        button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        button:hover { background-color: #1557b0; }
+        .footer-note { font-size: 12px; color: #777; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>अग्निशमन रजा नोंद प्रणाली</h2>
+
+    <div class="section">
+        <div class="section-title">सुरुवातीचा डेटा (Initial Setup - एकदाच भरणे)</div>
+        <div class="grid">
+            <div>
+                <label>मागील रजा संपल्याचा दिनांक (P3):</label>
+                <input type="date" id="p3_prev_end_date" onchange="updateStartDate()">
+            </div>
+            <div>
+                <label>सुरुवातीची शिल्लक हक्काची रजा (Z3):</label>
+                <input type="number" step="0.01" id="z3_bal_el" value="0">
+            </div>
+            <div>
+                <label>सुरुवातीची शिल्लक मेडिकल रजा (AA3):</label>
+                <input type="number" step="0.01" id="aa3_bal_ml" value="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">हजर दिवसांचा हिशोब</div>
+        <div class="grid">
+            <div>
+                <label>सुरवातीचा हजर दिनांक (A4):</label>
+                <input type="date" id="a4_start_date" readonly>
+            </div>
+            <div>
+                <label>शेवटचा हजर दिनांक (B4):</label>
+                <input type="date" id="b4_end_date" onchange="calculateLogic()">
+            </div>
+            <div>
+                <label>Year-end / Regular (C4):</label>
+                <select id="c4_type">
+                    <option value="Regular">Regular</option>
+                    <option value="Year-end">Year-end</option>
+                </select>
+            </div>
+            <div>
+                <label>एकूण हजर दिवस (D4):</label>
+                <input type="number" id="d4_total_days" readonly>
+            </div>
+            <div>
+                <label>बिन पगारी रजा LWP (E4):</label>
+                <input type="number" id="e4_lwp" value="0" oninput="calculateLogic()">
+            </div>
+            <div>
+                <label>निव्वळ हजर दिवस (F4):</label>
+                <input type="number" id="f4_net_days" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">साठलेली रजा (Formulas G, H, K, L)</div>
+        <div class="grid">
+            <div>
+                <label>साठलेली हक्काची रजा (G4):</label>
+                <input type="text" id="g4_earned" readonly>
+            </div>
+            <div>
+                <label>साठलेली मेडिकल रजा (H4):</label>
+                <input type="text" id="h4_medical" readonly>
+            </div>
+            <div>
+                <label>एकूण साठलेली EL (K4):</label>
+                <input type="text" id="k4_total_el" readonly>
+            </div>
+            <div>
+                <label>एकूण साठलेली ML (L4):</label>
+                <input type="text" id="l4_total_ml" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">रजेचा तपशील</div>
+        <div class="grid">
+            <div>
+                <label>रजेवर गेल्याचा दिनांक (O4):</label>
+                <input type="date" id="o4_leave_start" readonly>
+            </div>
+            <div>
+                <label>रजा संपल्याचा दिनांक (P4):</label>
+                <input type="date" id="p4_leave_end" onchange="calculateLogic()">
+            </div>
+            <div>
+                <label>रजेचा प्रकार (Q4):</label>
+                <select id="q4_leave_type" onchange="calculateLogic()">
+                    <option value="हक्काची रजा">हक्काची रजा</option>
+                    <option value="वैद्यकीय रजा">वैद्यकीय रजा</option>
+                    <option value="विशेष रजा">विशेष रजा</option>
+                </select>
+            </div>
+            <div>
+                <label>घेतलेल्या रजेचे दिवस (R4):</label>
+                <input type="number" id="r4_leave_days" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" style="background: #e7f3ff;">
+        <div class="section-title">अंतिम शिल्लक (Final Balance)</div>
+        <div class="grid">
+            <div>
+                <label style="color: blue;">शिल्लक हक्काची रजा (Z4):</label>
+                <input type="text" id="z4_final_el" readonly>
+            </div>
+            <div>
+                <label style="color: blue;">शिल्लक मेडिकल रजा (AA4):</label>
+                <input type="text" id="aa4_final_ml" readonly>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="window.print()">रिपोर्ट प्रिंट करा</button>
+    <p class="footer-note">टीप: हे सॉफ्टवेअर तुमच्या Excel फॉर्म्युल्यानुसार मोजणी करते.</p>
+</div>
+
+<script>
+    function updateStartDate() {
+        const p3Date = document.getElementById('p3_prev_end_date').value;
+        if (p3Date) {
+            let nextDay = new Date(p3Date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            document.getElementById('a4_start_date').value = nextDay.toISOString().split('T')[0];
+        }
+        calculateLogic();
+    }
+
+    function calculateLogic() {
+        // १. तारखांमधील फरक मोजणे
+        const a4 = new Date(document.getElementById('a4_start_date').value);
+        const b4 = new Date(document.getElementById('b4_end_date').value);
+        
+        if (a4 && b4 && b4 >= a4) {
+            const diffTime = Math.abs(b4 - a4);
+            const d4 = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            document.getElementById('d4_total_days').value = d4;
+
+            const e4 = parseFloat(document.getElementById('e4_lwp').value) || 0;
+            const f4 = d4 - e4;
+            document.getElementById('f4_net_days').value = f4;
+
+            // G4 formula: INT(F4/11) + MOD(F4,11)/100
+            let g4 = Math.floor(f4 / 11) + (f4 % 11) / 100;
+            document.getElementById('g4_earned').value = g4.toFixed(2);
+
+            // H4 formula: INT(F4/30) + MOD(F4,30)/100
+            let h4 = Math.floor(f4 / 30) + (f4 % 30) / 100;
+            document.getElementById('h4_medical').value = h4.toFixed(2);
+
+            // K4 & L4 Calculation (Complex logic for fractional leave)
+            let z3 = parseFloat(document.getElementById('z3_bal_el').value) || 0;
+            let aa3 = parseFloat(document.getElementById('aa3_bal_ml').value) || 0;
+
+            // K4 Formula implementation
+            let z3_int = Math.floor(z3);
+            let z3_mod = Math.round((z3 % 1) * 100);
+            let g4_int = Math.floor(g4);
+            let g4_mod = Math.round((g4 % 1) * 100);
+            
+            let k4_val = Math.min(365, z3_int + g4_int + Math.floor((z3_mod + g4_mod)/11) + ((z3_mod + g4_mod)%11)/100);
+            document.getElementById('k4_total_el').value = k4_val.toFixed(2);
+
+            // L4 Formula implementation
+            let aa3_int = Math.floor(aa3);
+            let aa3_mod = Math.round((aa3 % 1) * 100);
+            let h4_int = Math.floor(h4);
+            let h4_mod = Math.round((h4 % 1) * 100);
+
+            let l4_val = Math.min(120, aa3_int + h4_int + Math.floor((aa3_mod + h4_mod)/30) + ((aa3_mod + h4_mod)%30)/100);
+            document.getElementById('l4_total_ml').value = l4_val.toFixed(2);
+
+            // O4 logic: B4 + 1
+            let o4Date = new Date(b4);
+            o4Date.setDate(o4Date.getDate() + 1);
+            document.getElementById('o4_leave_start').value = o4Date.toISOString().split('T')[0];
+
+            // R4 Calculation
+            const p4 = new Date(document.getElementById('p4_leave_end').value);
+            if (p4 && p4 >= o4Date) {
+                const leaveDiff = Math.abs(p4 - o4Date);
+                const r4 = Math.ceil(leaveDiff / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('r4_leave_days').value = r4;
+
+                // Final Balances Z4 and AA4
+                const q4 = document.getElementById('q4_leave_type').value;
+                let z4, aa4;
+
+                // Z4 logic
+                if (q4 === "हक्काची रजा") {
+                    z4 = (r4 >= Math.floor(k4_val)) ? (k4_val % 1) : (Math.floor(k4_val) - r4 + (k4_val % 1));
+                } else if (q4 === "वैद्यकीय रजा") {
+                    z4 = Math.min(365, Math.max(0, Math.floor(k4_val) - Math.max(0, r4 - Math.floor(l4_val)) + (k4_val % 1)));
+                } else {
+                    z4 = k4_val;
+                }
+
+                // AA4 logic
+                if (q4 === "वैद्यकीय रजा") {
+                    aa4 = (r4 >= Math.floor(l4_val)) ? (l4_val % 1) : (Math.floor(l4_val) - r4 + (l4_val % 1));
+                } else {
+                    aa4 = l4_val;
+                }
+
+                document.getElementById('z4_final_el').value = z4.toFixed(2);
+                document.getElementById('aa4_final_ml').value = aa4.toFixed(2);
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
