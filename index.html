@@ -2,7 +2,7 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>पुणे महानगरपालिका रजा नोंद प्रणाली</title>
+    <title>पुणे महानगरपालिका रजा नोंद प्रणाली - अद्ययावत</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
         .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -14,8 +14,10 @@
         input:disabled, input[readonly] { background-color: #eee; color: #555; }
         .btn-group { display: flex; gap: 10px; margin-top: 18px; }
         .btn-add { background-color: #1a73e8; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; flex: 2; font-size: 16px; font-weight: bold; }
+        .btn-excel { background-color: #2e7d32; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; flex: 1.5; font-size: 16px; font-weight: bold; }
         .btn-delete { background-color: #d32f2f; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; flex: 1; font-size: 14px; font-weight: bold; }
         .btn-add:hover { background-color: #1557b0; }
+        .btn-excel:hover { background-color: #1b5e20; }
         .btn-delete:hover { background-color: #b71c1c; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
         th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
@@ -61,6 +63,7 @@
         </div>
         <div class="btn-group">
             <button class="btn-add" onclick="addEntry()">जतन करा (Save Entry)</button>
+            <button class="btn-excel" onclick="downloadExcel()">Excel डाउनलोड करा</button>
             <button class="btn-delete" id="deleteBtn" onclick="deleteLastEntry()" style="display:none;">शेवटची नोंद हटवा</button>
         </div>
     </div>
@@ -75,7 +78,7 @@
                 <th>साठलेली ML (H)</th>
                 <th>एकूण साठलेली EL (K)</th>
                 <th>एकूण साठलेली ML (L)</th>
-                <th>गैरहजर दिनांक (O-P)</th>
+                <th>रजा कालावधी दिनांक (O-P)</th>
                 <th>रजा प्रकार (Q)</th>
                 <th>रजा दिवस (R)</th>
                 <th>अंतिम शिल्लक EL (Z)</th>
@@ -87,7 +90,7 @@
 </div>
 
 <script>
-    let history = []; // नोंदींचा इतिहास साठवण्यासाठी
+    let history = []; 
     let isFirstEntry = true;
     let initialValues = {};
 
@@ -213,6 +216,42 @@
                 <td class="highlight">${item.finalEL.toFixed(2)}</td><td class="highlight">${item.finalML.toFixed(2)}</td>
             `;
         });
+    }
+
+    // Excel डाउनलोड करण्याचे फंक्शन
+    function downloadExcel() {
+        if (history.length === 0) {
+            alert("डाउनलोड करण्यासाठी कोणतीही नोंद उपलब्ध नाही!");
+            return;
+        }
+
+        let csvContent = "\uFEFF"; // UTF-8 BOM मराठी शब्दांसाठी
+        const headers = ["हजर दिनांक (A-B)", "हजर दिवस (F)", "साठलेली EL (G)", "साठलेली ML (H)", "एकूण साठलेली EL (K)", "एकूण साठलेली ML (L)", "रजा कालावधी दिनांक (O-P)", "रजा प्रकार (Q)", "रजा दिवस (R)", "अंतिम शिल्लक EL (Z)", "अंतिम शिल्लक ML (AA)"];
+        csvContent += headers.join(",") + "\n";
+
+        history.forEach(item => {
+            let row = [
+                `"${new Date(item.a).toLocaleDateString('en-GB')} - ${new Date(item.b).toLocaleDateString('en-GB')}"`,
+                item.f,
+                item.g.toFixed(2),
+                item.h.toFixed(2),
+                item.k_val.toFixed(2),
+                item.l_val.toFixed(2),
+                `"${new Date(item.o).toLocaleDateString('en-GB')} - ${new Date(item.p).toLocaleDateString('en-GB')}"`,
+                `"${item.q}"`,
+                item.r_diff,
+                item.finalEL.toFixed(2),
+                item.finalML.toFixed(2)
+            ];
+            csvContent += row.join(",") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "PMC_Raja_Nond.csv");
+        link.click();
     }
 </script>
 </body>
