@@ -2,7 +2,7 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <title>पुणे महानगरपालिका रजा नोंद प्रणाली - अद्ययावत</title>
+    <title>पुणे महानगरपालिका रजा नोंद प्रणाली</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
         .container { max-width: 1350px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -25,6 +25,18 @@
         tr:nth-child(even) { background-color: #f9f9f9; }
         .highlight { font-weight: bold; color: #1a73e8; background: #e8f0fe; }
         .accumulated { color: #2e7d32; font-weight: bold; background: #f1f8e9; }
+        
+        /* तळटीप संदेशासाठी स्टाईल */
+        .footer-msg {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #eeeeee;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
@@ -87,6 +99,11 @@
         </thead>
         <tbody></tbody>
     </table>
+
+    <!-- सूचना संदेश (सर्वात शेवटी) -->
+    <div class="footer-msg">
+        सदर software बद्दल आपल्या काही सूचना किंवा दुरुस्ती असल्यास हनुमंत आडागळे मोबाईल 9922987391 यावर whatsapp message करा. धन्यवाद!
+    </div>
 </div>
 
 <script>
@@ -218,17 +235,14 @@
         });
     }
 
-    // Excel डाउनलोड करण्याचे फंक्शन
     function downloadExcel() {
         if (history.length === 0) {
             alert("डाउनलोड करण्यासाठी कोणतीही नोंद उपलब्ध नाही!");
             return;
         }
-
-        let csvContent = "\uFEFF"; // UTF-8 BOM मराठी शब्दांसाठी
+        let csvContent = "\uFEFF"; 
         const headers = ["हजर दिनांक (A-B)", "हजर दिवस (F)", "साठलेली EL (G)", "साठलेली ML (H)", "एकूण साठलेली EL (K)", "एकूण साठलेली ML (L)", "रजा कालावधी दिनांक (O-P)", "रजा प्रकार (Q)", "रजा दिवस (R)", "अंतिम शिल्लक EL (Z)", "अंतिम शिल्लक ML (AA)"];
         csvContent += headers.join(",") + "\n";
-
         history.forEach(item => {
             let row = [
                 `"${new Date(item.a).toLocaleDateString('en-GB')} - ${new Date(item.b).toLocaleDateString('en-GB')}"`,
@@ -245,7 +259,6 @@
             ];
             csvContent += row.join(",") + "\n";
         });
-
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
@@ -253,13 +266,6 @@
         link.setAttribute("download", "PMC_Raja_Nond.csv");
         link.click();
     }
-
-    // पेज लोड झाल्यावर संदेश दाखवण्यासाठी
-window.onload = function() {
-    let msgBox = document.getElementById('user_message');
-    msgBox.innerHTML = "सदर software बद्दल आपल्या काही सूचना किंवा दुरुस्ती असल्यास हनुमंत आडागळे मोबाईल 9922987391 यावर whatsapp message करा. धन्यवाद!"; // तुमचा मेसेज इथे टाका
-    msgBox.style.display = "block"; // मेसेज दाखवण्यासाठी
-};
 </script>
 </body>
 </html>
