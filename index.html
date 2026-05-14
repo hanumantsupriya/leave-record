@@ -253,6 +253,13 @@
         link.setAttribute("download", "PMC_Raja_Nond.csv");
         link.click();
     }
+
+    // पेज लोड झाल्यावर संदेश दाखवण्यासाठी
+window.onload = function() {
+    let msgBox = document.getElementById('user_message');
+    msgBox.innerHTML = "सदर software बद्दल आपल्या काही सूचना किंवा दुरुस्ती असल्यास हनुमंत आडागळे मोबाईल 9922987391 यावर whatsapp message करा. धन्यवाद!"; // तुमचा मेसेज इथे टाका
+    msgBox.style.display = "block"; // मेसेज दाखवण्यासाठी
+};
 </script>
 </body>
 </html>
