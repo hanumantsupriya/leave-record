@@ -40,9 +40,6 @@
         .btn-delete { background-color: #d32f2f; color: white; padding: 0 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; height: 38px; white-space: nowrap; text-align: center; }
         .btn-clear { background-color: #555555; color: white; padding: 0 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; height: 38px; white-space: nowrap; text-align: center; }
         
-        .btn-calc-bonus { background-color: #00796b; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; width: 100%; }
-        .btn-save-bonus { background-color: #e65100; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; width: 100%; display: none; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
         th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
         th { background-color: #1a73e8; color: white; }
@@ -278,7 +275,11 @@
             document.getElementById('aa3_bal').value = initialValues.ml;
             document.getElementById('aa3_bal').disabled = true;
             let lastRecord = history[history.length - 1];
-            document.getElementById('a_start').value = lastRecord.type === "bonus" ? lastRecord.nextA : formatDMY(nextDay(parseDMY(lastRecord.p)));
+            
+            let nextA = lastRecord.type === "bonus" ? lastRecord.nextA : formatDMY(nextDay(parseDMY(lastRecord.p)));
+            document.getElementById('a_start').value = nextA;
+            document.getElementById('o_leave_start').value = nextA;
+            
             document.getElementById('deleteBtn').style.display = "inline-block";
             renderTable();
         }
@@ -316,9 +317,10 @@
         return next;
     }
 
+    // अचूक दुरुस्ती: शेवटची हजर तारीख टाकताच त्यापुढील रजा तारीख आपोआप अपडेट होणे
     function updateLeaveStartDate() {
         let bVal = document.getElementById('b_end').value;
-        if(bVal && bVal.trim() !== "") {
+        if(bVal && bVal.trim() !== "" && bVal.trim() !== "---") {
             document.getElementById('o_leave_start').value = formatDMY(nextDay(parseDMY(bVal)));
         } else {
             document.getElementById('o_leave_start').value = document.getElementById('a_start').value;
@@ -337,6 +339,7 @@
         }
     }
 
+    // अचूक दुरुस्ती: सुरुवातीला P3 टाकताच A आणि O आपोआप सेट होणे
     function setFirstStartDate() {
         if(isFirstEntry && document.getElementById('p3_date').value) {
             let nextA = formatDMY(nextDay(parseDMY(document.getElementById('p3_date').value)));
@@ -398,7 +401,7 @@
     function validateLwpDatesScope() {
         let aStr = document.getElementById('a_start').value;
         let bStr = document.getElementById('b_end').value;
-        if(!aStr || !bStr) return true;
+        if(!aStr || !bStr || bStr === "---") return true;
         let aDate = parseDMY(aStr);
         let bDate = parseDMY(bStr);
 
@@ -464,7 +467,7 @@
         let q = document.getElementById('q_type').value;
         let e = parseFloat(document.getElementById('e_lwp').value) || 0;
 
-        if (!a || !b || !p) { alert("कृपया सर्व आवश्यक तारखा भरा!"); return; }
+        if (!a || !p) { alert("कृपया सर्व आवश्यक तारखा भरा!"); return; }
 
         if (isFirstEntry) {
             initialValues = { el: parseFloat(document.getElementById('z3_bal').value) || 0, ml: parseFloat(document.getElementById('aa3_bal').value) || 0, p3: document.getElementById('p3_date').value };
@@ -478,8 +481,11 @@
         let curEL = history.length > 0 ? history[history.length-1].finalEL : initialValues.el;
         let curML = history.length > 0 ? history[history.length-1].finalML : initialValues.ml;
         
-        let totalDaysInRange = (Math.ceil(Math.abs(parseDMY(b) - parseDMY(a)) / (1000 * 60 * 60 * 24)) + 1);
-        let f = totalDaysInRange - e;
+        let f = 0;
+        if(b && b.trim() !== "" && b.trim() !== "---") {
+            f = (Math.ceil(Math.abs(parseDMY(b) - parseDMY(a)) / (1000 * 60 * 60 * 24)) + 1);
+        }
+        f = f - e;
         if(f < 0) f = 0;
         
         let g = Math.floor(f / 11) + (f % 11) / 100;
@@ -519,10 +525,11 @@
             });
         }
 
-        history.push({ type: "regular", a, b, e, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML, lwpIntervals });
+        history.push({ type: "regular", a, b: (b && b.trim() !== "") ? b : "---", e, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML, lwpIntervals });
         localStorage.setItem("pmc_leave_history", JSON.stringify(history));
         
         renderTable();
+        
         let nextA = formatDMY(nextDay(parseDMY(p)));
         document.getElementById('a_start').value = nextA;
         document.getElementById('o_leave_start').value = nextA;
@@ -642,14 +649,12 @@
         }));
     }
 
-    // ** नवीन जोडलेले लॉजिक: हक्काची, वैद्यकीय आणि विशेष रजेचे महिनावार वर्गीकरण **
     function generateLeaveAndLwpReports() {
-        let lwpMap = {};       // LWP साठी स्वतंत्र मॅप
-        let leaveMap = {};     // इतर सर्व रजांसाठी (EL, ML, विशेष) मॅप
+        let lwpMap = {};       
+        let leaveMap = {};     
 
         history.forEach(item => {
             if(item.type !== "bonus") {
-                // १. अंतर्गत भरलेल्या LWP तुकड्यांची विभागणी
                 if(item.lwpIntervals && item.lwpIntervals.length > 0) {
                     item.lwpIntervals.forEach(interval => {
                         let dStart = parseDMY(interval.start), dEnd = parseDMY(interval.end);
@@ -670,7 +675,6 @@
                     });
                 }
 
-                // २. इतर रजांचे (O ते P कालावधी) महिन्याप्रमाणे तुकडे पाडणे
                 let dStart = parseDMY(item.o), dEnd = parseDMY(item.p);
                 if(dStart && dEnd) {
                     let current = new Date(dStart);
@@ -684,7 +688,6 @@
                         if(!leaveMap[monthKey]) {
                             leaveMap[monthKey] = { "हक्काची रजा": 0, "वैद्यकीय रजा": 0, "विशेष रजा": 0, breakups: [] };
                         }
-                        
                         if(leaveMap[monthKey][item.q] !== undefined) {
                             leaveMap[monthKey][item.q] += segmentDays;
                         }
@@ -695,31 +698,37 @@
             }
         });
 
-        // ५. LWP टेबल रेंडरिंग
-        let lwpTbody = document.querySelector("#lwpMonthlyTable tbody");
-        lwpTbody.innerHTML = "";
+        let lwpTwp = document.querySelector("#lwpMonthlyTable tbody");
+        lwpTwp.innerHTML = "";
         let sortedLwpMonths = Object.keys(lwpMap).sort((mA, mB) => {
             return new Date(mA.split("/")[1], mA.split("/")[0]-1) - new Date(mB.split("/")[1], mB.split("/")[0]-1);
         });
+        
         if(sortedLwpMonths.length === 0) {
-            lwpTbody.innerHTML = `<tr><td colspan="3" style="color: #666;">अजून कोणतीही बिनपगारी नोंद नाही.</td></tr>`;
+            lwpTwp.innerHTML = `<tr><td colspan="3" style="color: #666;">अजून कोणतीही बिनपगारी नोंद नाही.</td></tr>`;
         } else {
+            let totalLwpSum = 0; 
             sortedLwpMonths.forEach(month => {
                 let mName = new Date(month.split("/")[1], month.split("/")[0]-1).toLocaleString('mr', { month: 'long', year: 'numeric' });
-                let row = lwpTbody.insertRow();
+                let row = lwpTwp.insertRow();
                 row.innerHTML = `<td><strong>${mName}</strong></td><td style="color:#d32f2f; font-weight:bold;">${lwpMap[month].days} दिवस</td><td style="text-align:left; padding-left:15px;">${lwpMap[month].intervals.join("<br>")}</td>`;
+                totalLwpSum += lwpMap[month].days;
             });
+            let lwpTotalRow = lwpTwp.insertRow();
+            lwpTotalRow.className = "grand-total-row";
+            lwpTotalRow.innerHTML = `<td>ग्रँड एकूण संख्या (Grand Total LWP)</td><td style="color:#1b5e20; font-weight:bold;">${totalLwpSum} दिवस</td><td>---</td>`;
         }
 
-        // ६. इतर रजा टेबल रेंडरिंग (EL / ML / विशेष)
         let leaveTbody = document.querySelector("#allLeavesMonthlyTable tbody");
         leaveTbody.innerHTML = "";
         let sortedLeaveMonths = Object.keys(leaveMap).sort((mA, mB) => {
             return new Date(mA.split("/")[1], mA.split("/")[0]-1) - new Date(mB.split("/")[1], mB.split("/")[0]-1);
         });
+        
         if(sortedLeaveMonths.length === 0) {
             leaveTbody.innerHTML = `<tr><td colspan="5" style="color: #666;">अजून कोणतीही रजा नोंद नाही.</td></tr>`;
         } else {
+            let totalElSum = 0, totalMlSum = 0, totalSplSum = 0; 
             sortedLeaveMonths.forEach(month => {
                 let mName = new Date(month.split("/")[1], month.split("/")[0]-1).toLocaleString('mr', { month: 'long', year: 'numeric' });
                 let row = leaveTbody.insertRow();
@@ -730,7 +739,19 @@
                     <td style="color:#00796b; font-weight:bold;">${leaveMap[month]["विशेष रजा"]} दिवस</td>
                     <td style="text-align:left; padding-left:15px; line-height:1.4;">${leaveMap[month].breakups.join("<br>")}</td>
                 `;
+                totalElSum += leaveMap[month]["हक्काची रजा"];
+                totalMlSum += leaveMap[month]["वैद्यकीय रजा"];
+                totalSplSum += leaveMap[month]["विशेष रजा"];
             });
+            let leaveTotalRow = leaveTbody.insertRow();
+            leaveTotalRow.className = "grand-total-row";
+            leaveTotalRow.innerHTML = `
+                <td>ग्रँड एकूण संख्या (Grand Total Leaves)</td>
+                <td style="color:#1b5e20; font-weight:bold;">${totalElSum} दिवस</td>
+                <td style="color:#1b5e20; font-weight:bold;">${totalMlSum} दिवस</td>
+                <td style="color:#1b5e20; font-weight:bold;">${totalSplSum} दिवस</td>
+                <td>---</td>
+            `;
         }
     }
 
@@ -766,7 +787,7 @@
                 `;
             } else {
                 let lwpValue = (item.e === "" || item.e === undefined || isNaN(item.e)) ? 0 : item.e;
-                let displayA_B = `${item.a} - ${item.b}`;
+                let displayA_B = (item.b === "---") ? "---" : `${item.a} - ${item.b}`;
                 
                 let lwpCellText = lwpValue > 0 && item.lwpIntervals ? 
                     `<strong>${lwpValue}</strong><br><small style="color:#795548;">(${item.lwpIntervals.map(i=>i.start+"-"+i.end).join(", ")})</small>` : lwpValue;
@@ -809,7 +830,6 @@
             gtRow.innerHTML = `<td>ग्रँड एकूण संख्या (Grand Total)</td><td>${grandF}</td><td>${grandE}</td><td>${grandG.toFixed(2)}</td><td>${grandH.toFixed(2)}</td><td>${grandR}</td>`;
         }
 
-        // अहवाल जनरेट करणे (LWP + सर्व रजा)
         generateLeaveAndLwpReports();
     }
 
