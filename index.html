@@ -62,7 +62,7 @@
 <body>
 
 <div class="container">
-    <h2>पुणे महानगरपालिका रजा नोंद व्यवस्थापन प्रणाली</h2>
+    <h2>पुणे महानगरपालिका रजा नोंद व सेवानिवृत्ती व्यवस्थापन प्रणाली</h2>
 
     <div class="tab-bar">
         <button class="tab-btn active" onclick="switchTab('page1')">१. रजा नोंदणी पुस्तिका (सर्व पाने)</button>
@@ -87,7 +87,7 @@
         </div>
 
         <div class="entry-box">
-            <div><label>सुरुवातीचा हजर दिनांक (A):</label><input type="text" id="a_start" placeholder="DD/MM/YYYY" readonly></div>
+            <div><label>सुरवातीचा हजर दिनांक (A):</label><input type="text" id="a_start" placeholder="DD/MM/YYYY" readonly></div>
             <div><label>शेवटचा हजर दिनांक (B):</label><input type="text" id="b_end" placeholder="DD/MM/YYYY"></div>
             <div><label>बिन पगारी रजा LWP (E):</label><input type="number" id="e_lwp" value="0" oninput="toggleLwpPanel()"></div>
             <div><label>रजेवर गेल्याचा दिनांक (O):</label><input type="text" id="o_leave_start" placeholder="DD/MM/YYYY" readonly></div>
@@ -123,11 +123,11 @@
             <h4 style="margin: 0 0 10px 0; color: #004d40;">अत्यावश्यक सेवा कर्मचारी - अतिरिक्त वार्षिक १५ रजा गणना (User Option)</h4>
             <div class="grid-3">
                 <div>
-                    <label>अतिरिक्त रजा सुरुवातीचा दिनांक:</label>
+                    <label>अकलूज/अतिरिक्त रजा सुरुवातीचा दिनांक:</label>
                     <input type="text" id="bonus_start_date" placeholder="DD/MM/YYYY">
                 </div>
                 <div>
-                    <label>अतिरिक्त रजा शेवटचा दिनांक:</label>
+                    <label>अकलूज/अतिरिक्त रजा शेवटचा दिनांक:</label>
                     <input type="text" id="bonus_end_date" placeholder="DD/MM/YYYY">
                 </div>
                 <div>
@@ -149,7 +149,7 @@
                     <th>साठलेली ML (H)</th>
                     <th>एकूण साठलेली EL (K)</th>
                     <th>एकूण साठलेली ML (L)</th>
-                    <th>रजा कालावधी दिनांक (O-P)</th>
+                    <th>गैरहजर दिनांक (O-P)</th>
                     <th>रजा प्रकार (Q)</th>
                     <th>रजा दिवस (R)</th>
                     <th>अंतिम शिल्लक EL (Z)</th>
@@ -213,7 +213,7 @@
         <div class="encash-box">
             <div><label>मूळ वेतन (Basic Pay - रु.):</label><input type="number" id="basic_pay" placeholder="उदा. 56100" oninput="calculateEncashment()"></div>
             <div><label>महागाई भत्ता (DA - रु.):</label><input type="number" id="da_amount" placeholder="उदा. 28050" oninput="calculateEncashment()"></div>
-            <div><label>एकूण शिल्लक हक्काची रजा (Total EL):</label><input type="number" id="total_el_shilak" placeholder="नोंदींमधून आपोआप येईल" oninput="calculateEncashment()"></div>
+            <div><label>एकूण शिल्लक हक्काची रजा (Total EL):</label><input type="number" id="total_el_shilak" placeholder="नोंदींमधून आपोอัต येईल" oninput="calculateEncashment()"></div>
         </div>
         <div class="result-card" id="encashmentResult">माहिती भरा, रक्कम येथे दिसेल.</div>
         <div style="margin-top: 15px; text-align: right;">
@@ -317,7 +317,6 @@
         return next;
     }
 
-    // अचूक दुरुस्ती: शेवटची हजर तारीख टाकताच त्यापुढील रजा तारीख आपोआप अपडेट होणे
     function updateLeaveStartDate() {
         let bVal = document.getElementById('b_end').value;
         if(bVal && bVal.trim() !== "" && bVal.trim() !== "---") {
@@ -339,7 +338,6 @@
         }
     }
 
-    // अचूक दुरुस्ती: सुरुवातीला P3 टाकताच A आणि O आपोआप सेट होणे
     function setFirstStartDate() {
         if(isFirstEntry && document.getElementById('p3_date').value) {
             let nextA = formatDMY(nextDay(parseDMY(document.getElementById('p3_date').value)));
@@ -439,7 +437,11 @@
             let sStr = input.value;
             let eStr = endInputs[i].value;
             if(!sStr || !eStr) { allFilled = false; return; }
-            let diff = Math.ceil(Math.abs(parseDMY(eStr) - parseDMY(sStr)) / (1000 * 60 * 60 * 24)) + 1;
+            
+            // दुरुस्ती: DST किंवा वेळेच्या फरकामुळे दिवसांचे कॅल्क्युलेशन चुकणार नाही याची काळजी घेतली
+            let d1 = parseDMY(sStr);
+            let d2 = parseDMY(eStr);
+            let diff = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
             currentTotal += diff;
         });
 
@@ -467,7 +469,7 @@
         let q = document.getElementById('q_type').value;
         let e = parseFloat(document.getElementById('e_lwp').value) || 0;
 
-        if (!a || !p) { alert("कृपया सर्व आवश्यक तारखा भरा!"); return; }
+        if (!a || !b || !p) { alert("कृपया सर्व आवश्यक तारखा भरा!"); return; }
 
         if (isFirstEntry) {
             initialValues = { el: parseFloat(document.getElementById('z3_bal').value) || 0, ml: parseFloat(document.getElementById('aa3_bal').value) || 0, p3: document.getElementById('p3_date').value };
@@ -481,11 +483,10 @@
         let curEL = history.length > 0 ? history[history.length-1].finalEL : initialValues.el;
         let curML = history.length > 0 ? history[history.length-1].finalML : initialValues.ml;
         
-        let f = 0;
-        if(b && b.trim() !== "" && b.trim() !== "---") {
-            f = (Math.ceil(Math.abs(parseDMY(b) - parseDMY(a)) / (1000 * 60 * 60 * 24)) + 1);
-        }
-        f = f - e;
+        let d1 = parseDMY(a);
+        let d2 = parseDMY(b);
+        let totalDaysInRange = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        let f = totalDaysInRange - e;
         if(f < 0) f = 0;
         
         let g = Math.floor(f / 11) + (f % 11) / 100;
@@ -499,7 +500,9 @@
         let h_int = Math.floor(h), h_mod = Math.round((h % 1) * 100);
         let l_val = applyLimits(aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100, 120);
         
-        let r_diff = Math.ceil(Math.abs(parseDMY(p) - parseDMY(o)) / (1000 * 60 * 60 * 24)) + 1;
+        let do1 = parseDMY(o);
+        let dp1 = parseDMY(p);
+        let r_diff = Math.round((dp1.getTime() - do1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
         let finalEL, finalML;
         let k_base = Math.floor(k_val), k_dec = Math.round((k_val % 1) * 100) / 100;
@@ -525,11 +528,10 @@
             });
         }
 
-        history.push({ type: "regular", a, b: (b && b.trim() !== "") ? b : "---", e, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML, lwpIntervals });
+        history.push({ type: "regular", a, b, e, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML, lwpIntervals });
         localStorage.setItem("pmc_leave_history", JSON.stringify(history));
         
         renderTable();
-        
         let nextA = formatDMY(nextDay(parseDMY(p)));
         document.getElementById('a_start').value = nextA;
         document.getElementById('o_leave_start').value = nextA;
@@ -546,7 +548,7 @@
 
         let dStart = parseDMY(startStr);
         let dEnd = parseDMY(endStr);
-        let totalCalendarDays = Math.ceil(Math.abs(dEnd - dStart) / (1000 * 60 * 60 * 24)) + 1;
+        let totalCalendarDays = Math.round((dEnd.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         let totalR = 0;
         let totalE = 0;
 
@@ -659,13 +661,19 @@
                     item.lwpIntervals.forEach(interval => {
                         let dStart = parseDMY(interval.start), dEnd = parseDMY(interval.end);
                         if(!dStart || !dEnd) return;
-                        let current = new Date(dStart);
-                        while (current <= dEnd) {
+                        
+                        // **दुरुस्त केलेले अचूक तारीख मोजणी लॉजिक**
+                        let current = new Date(dStart.getFullYear(), dStart.getMonth(), dStart.getDate());
+                        let targetEnd = new Date(dEnd.getFullYear(), dEnd.getMonth(), dEnd.getDate());
+
+                        while (current <= targetEnd) {
                             let monthKey = `${String(current.getMonth() + 1).padStart(2, '0')}/${current.getFullYear()}`;
                             let nextMonthFirstDay = new Date(current.getFullYear(), current.getMonth() + 1, 1);
                             let segmentEnd = new Date(nextMonthFirstDay - 1);
-                            if (segmentEnd > dEnd) segmentEnd = new Date(dEnd);
-                            let segmentDays = Math.ceil(Math.abs(segmentEnd - current) / (1000 * 60 * 60 * 24)) + 1;
+                            if (segmentEnd > targetEnd) segmentEnd = new Date(targetEnd);
+                            
+                            // अचूक दिवसांची वजाबाकी (DST विना)
+                            let segmentDays = Math.round((segmentEnd.getTime() - current.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
                             if(!lwpMap[monthKey]) lwpMap[monthKey] = { days: 0, intervals: [] };
                             lwpMap[monthKey].days += segmentDays;
@@ -677,13 +685,16 @@
 
                 let dStart = parseDMY(item.o), dEnd = parseDMY(item.p);
                 if(dStart && dEnd) {
-                    let current = new Date(dStart);
-                    while(current <= dEnd) {
+                    let current = new Date(dStart.getFullYear(), dStart.getMonth(), dStart.getDate());
+                    let targetEnd = new Date(dEnd.getFullYear(), dEnd.getMonth(), dEnd.getDate());
+
+                    while(current <= targetEnd) {
                         let monthKey = `${String(current.getMonth() + 1).padStart(2, '0')}/${current.getFullYear()}`;
                         let nextMonthFirstDay = new Date(current.getFullYear(), current.getMonth() + 1, 1);
                         let segmentEnd = new Date(nextMonthFirstDay - 1);
-                        if (segmentEnd > dEnd) segmentEnd = new Date(dEnd);
-                        let segmentDays = Math.ceil(Math.abs(segmentEnd - current) / (1000 * 60 * 60 * 24)) + 1;
+                        if (segmentEnd > targetEnd) segmentEnd = new Date(targetEnd);
+                        
+                        let segmentDays = Math.round((segmentEnd.getTime() - current.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
                         if(!leaveMap[monthKey]) {
                             leaveMap[monthKey] = { "हक्काची रजा": 0, "वैद्यकीय रजा": 0, "विशेष रजा": 0, breakups: [] };
@@ -787,7 +798,7 @@
                 `;
             } else {
                 let lwpValue = (item.e === "" || item.e === undefined || isNaN(item.e)) ? 0 : item.e;
-                let displayA_B = (item.b === "---") ? "---" : `${item.a} - ${item.b}`;
+                let displayA_B = `${item.a} - ${item.b}`;
                 
                 let lwpCellText = lwpValue > 0 && item.lwpIntervals ? 
                     `<strong>${lwpValue}</strong><br><small style="color:#795548;">(${item.lwpIntervals.map(i=>i.start+"-"+i.end).join(", ")})</small>` : lwpValue;
@@ -836,7 +847,7 @@
     function downloadExcel() {
         if (history.length === 0) { alert("नोंद उपलब्ध नाही!"); return; }
         let csvContent = "\uFEFF";
-        const headers = ["हजर दिनांक / तपशील", "हजर दिवस (F)", "LWP (E)", "साठलेली EL (G)", "साठलेली ML (H)", "एकूण साठलेली EL (K)", "एकूण साठलेली ML (L)", "गैरहजर दिनांक", "रजा प्रकार (Q)", "रजा दिवस (R)", "अंतिम शिल्लक EL (Z)", "अंतिम शिल्लक ML (AA)"];
+        const headers = ["हजर दिनांक / तपशील", "हजर दिवस (F)", "LWP (E)", "साठलेली EL (G)", "साठलेली ML (H)", "एकूण साठलेली EL (K)", "एकूण साठलेली ML (L)", "गैरहजर दिनांक", "रजा प्रकार (Q)", "रजा दिवस (R)", "अंтим शिल्लक EL (Z)", "अंतिम शिल्लक ML (AA)"];
         csvContent += headers.join(",") + "\n";
         
         history.forEach((item) => {
