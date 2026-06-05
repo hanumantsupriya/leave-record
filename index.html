@@ -236,7 +236,7 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 <div id="page4" class="tab-content">
 <h3>७ व्या वेतन आयोग परिपत्रकानुसार सुधारित सेवांतर्गत आश्वासित प्रगती योजना (MACPS)</h3>
 
-<h4 style="color:#e65100; margin-top:10px;">⚙️ प्रत्येक लाभ टप्प्याचा सेवा अवधी, स्वयंचलित LWP आणि निलंबन कॅलेंडर निश्चित करा:</h4>
+<h4 style="color:#e65100; margin-top:10px;">⚙️ प्रत्येक लाभ टप्प्याचा सेवा अवधी, विशिष्ट ब्लॉक मधील LWP आणि निलंबन कॅलेंडर (Optional):</h4>
 <div class="macp-options-grid">
     <div class="macp-stage-card">
         <h5>१ ला लाभ टप्पा</h5>
@@ -248,16 +248,16 @@ tr:nth-child(even) { background-color: #f9f9f9; }
             </select>
         </div>
         <div>
-            <label>कालावधीतील LWP (स्वयंचलित):</label>
+            <label>ब्लॉक कालावधीतील LWP (स्वयंचलित):</label>
             <input type="number" id="macp_lwp1" value="0" readonly>
         </div>
         <div>
-            <label>निलंबन पासून (From):</label>
-            <input type="text" id="macp_susp_start1" class="susp-pick" placeholder="DD/MM/YYYY">
+            <label>निलंबन पासून (Optional):</label>
+            <input type="text" id="macp_susp_start1" class="susp-pick" placeholder="निवडा (किंवा कोरे ठेवा)">
         </div>
         <div>
-            <label>निलंबन पर्यंत (To):</label>
-            <input type="text" id="macp_susp_end1" class="susp-pick" placeholder="DD/MM/YYYY">
+            <label>निलंबन पर्यंत (Optional):</label>
+            <input type="text" id="macp_susp_end1" class="susp-pick" placeholder="निवडा (किंवा कोरे ठेवा)">
         </div>
     </div>
 
@@ -272,16 +272,16 @@ tr:nth-child(even) { background-color: #f9f9f9; }
             </select>
         </div>
         <div>
-            <label>कालावधीतील LWP (दिवस):</label>
+            <label>ब्लॉक कालावधीतील LWP (दिवस):</label>
             <input type="number" id="macp_lwp2" value="0" oninput="calculateMacp()">
         </div>
         <div>
-            <label>निलंबन पासून (From):</label>
-            <input type="text" id="macp_susp_start2" class="susp-pick" placeholder="DD/MM/YYYY">
+            <label>निलंबन पासून (Optional):</label>
+            <input type="text" id="macp_susp_start2" class="susp-pick" placeholder="निवडा (किंवा कोरे ठेवा)">
         </div>
         <div>
-            <label>निलंबन पर्यंत (To):</label>
-            <input type="text" id="macp_susp_end2" class="susp-pick" placeholder="DD/MM/YYYY">
+            <label>निलंबन पर्यंत (Optional):</label>
+            <input type="text" id="macp_susp_end2" class="susp-pick" placeholder="निवडा (किंवा कोरे ठेवा)">
         </div>
     </div>
 
@@ -296,16 +296,16 @@ tr:nth-child(even) { background-color: #f9f9f9; }
             </select>
         </div>
         <div>
-            <label>कालावधीतील LWP (दिवस):</label>
+            <label>ब्लॉक कालावधीतील LWP (दिवस):</label>
             <input type="number" id="macp_lwp3" value="0" oninput="calculateMacp()">
         </div>
         <div>
-            <label>निलंबन पासून (From):</label>
-            <input type="text" id="macp_susp_start2" class="susp-pick" placeholder="DD/MM/YYYY">
+            <label>निलंबन पासून (Optional):</label>
+            <input type="text" id="macp_susp_start3" class="susp-pick" placeholder="निवडा (किंवा कोरे ठेवा)">
         </div>
         <div>
-            <label>निलंबन पर्यंत (To):</label>
-            <input type="text" id="macp_susp_end3" class="susp-pick" placeholder="DD/MM/YYYY">
+            <label>निलंबन पर्यंत (Optional):</label>
+            <input type="text" id="macp_susp_end3" class="susp-pick" placeholder="निवडा (किंवा कोरे ठेवा)">
         </div>
     </div>
 </div>
@@ -394,7 +394,6 @@ const joinPick = flatpickr("#info_join_date", { ...config, onChange: function() 
 const retirePick = flatpickr("#info_retire_date", { ...config, onChange: saveEmployeeInfo });
 const macpJoinPick = flatpickr("#macp_join_date", { ...config, onChange: calculateMacp });
 
-// निलंबन कॅलेंडर संदर्भासाठी Flatpickr लावणे
 flatpickr(".susp-pick", { ...config, onChange: calculateMacp });
 
 window.onload = function() {
@@ -633,7 +632,7 @@ let aa3_int = Math.floor(curML), aa3_mod = Math.round((curML % 1) * 100);
 let h_int = Math.floor(h), h_mod = Math.round((h % 1) * 100);
 let l_val = applyLimits(aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100, 120);
 let do1 = parseDMY(o); let dp1 = parseDMY(p);
-let r_diff = Math.round((do1.getTime() - dp1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+let r_diff = Math.round((dp1.getTime() - do1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
 let finalEL, finalML;
 let k_base = Math.floor(k_val), k_dec = Math.round((k_val % 1) * 100) / 100;
@@ -778,18 +777,42 @@ function checkActualDueDate(hypotheticalDate) {
     return actualDate;
 }
 
-// ** कॅलेंडरमधील तारखांवरून दिवस मोजणारे नवीन उपयुक्त फंक्शन **
 function countDaysInCalendar(startId, endId) {
     let sStr = document.getElementById(startId).value;
     let eStr = document.getElementById(endId).value;
-    if(!sStr || !eStr) return 0;
+    if(!sStr || !eStr) return 0; // रिकामे असल्यास '०' दिवस मोजेल (Optional Fix)
     let d1 = parseDMY(sStr);
     let d2 = parseDMY(eStr);
     if(!d1 || !d2 || d2 < d1) return 0;
     return Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 }
 
-// ** सुधारित MACPS मोजणी - स्वयंचलित LWP आणि कॅलेंडर निलंबन दिवस लागू **
+// ** विशिष्ट ब्लॉक सेवा काळातील (१० / १२ वर्षे) LWP मोजणारे नवीन फंक्शन **
+function getBlockLwpDays(joinDateObj, blockYears) {
+    if (!joinDateObj) return 0;
+    let blockEndDate = new Date(joinDateObj.getFullYear() + blockYears, joinDateObj.getMonth(), joinDateObj.getDate());
+    let blockLwpCount = 0;
+
+    history.forEach(item => {
+        if (item.type !== "bonus" && item.lwpIntervals && item.lwpIntervals.length > 0) {
+            item.lwpIntervals.forEach(interval => {
+                let s = parseDMY(interval.start);
+                let e = parseDMY(interval.end);
+                if (s && e) {
+                    // जर रजा पूर्णपणे किंवा अंशतः पहिल्या ब्लॉकच्या कालावधीत येत असेल तरच मोजणे
+                    if (s <= blockEndDate) {
+                        let dynamicEnd = (e > blockEndDate) ? blockEndDate : e;
+                        let diff = Math.round((dynamicEnd.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                        if (diff > 0) blockLwpCount += diff;
+                    }
+                }
+            });
+        }
+    });
+    return blockLwpCount;
+}
+
+// ** सुधारित MACPS मोजणी - केवळ ब्लॉक सेवा काळातील LWP आणि ऑप्शनल सस्पेंशन नियम लागू **
 function calculateMacp() {
 let joinStr = document.getElementById('macp_join_date').value;
 let currentLevel = document.getElementById('macp_current_level').value;
@@ -801,20 +824,21 @@ resultBox.innerHTML = "⚠️ कृपया आधी कर्मचाऱ्
 
 let joinDate = parseDMY(joinStr);
 
-// १ ला लाभ टप्पा वर्ष आणि कॅलेंडर वरून मोजलेला सस्पेंशन कालावधी
+// १ ला लाभ: केवळ पहिल्या १०/१२ वर्षांच्या ब्लॉक कालावधीत पडलेली LWP मोजली जाईल (सर्व सेवेची नाही)
 let t1Years = parseInt(document.getElementById('macp_term1').value) || 10;
-let lwp1 = grandTotalLwpGlobal; // पहिल्या टप्प्यातील LWP पहिल्या पानावरील एकूण बेरीजेमधून स्वयंचलित
+let lwp1 = getBlockLwpDays(joinDate, t1Years); 
 document.getElementById('macp_lwp1').value = lwp1;
-let susp1 = countDaysInCalendar('macp_susp_start1', 'macp_susp_end1');
+
+let susp1 = countDaysInCalendar('macp_susp_start1', 'macp_susp_end1'); // रिकामे सोडल्यास '०' येईल (Optional)
 let penalty1 = lwp1 + susp1;
 
-// २ रा लाभ टप्पा वर्ष, LWP आणि कॅलेंडर वरून मोजलेला सस्पेंशन कालावधी
+// २ रा लाभ टप्पा
 let t2Years = parseInt(document.getElementById('macp_term2').value) || 10;
 let lwp2 = parseInt(document.getElementById('macp_lwp2').value) || 0;
 let susp2 = countDaysInCalendar('macp_susp_start2', 'macp_susp_end2');
 let penalty2 = lwp2 + susp2;
 
-// ३ रा लाभ टप्पा वर्ष, LWP आणि कॅलेंडर वरून मोजलेला सस्पेंशन कालावधी
+// ३ रा लाभ टप्पा
 let t3Years = parseInt(document.getElementById('macp_term3').value) || 10;
 let lwp3 = parseInt(document.getElementById('macp_lwp3').value) || 0;
 let susp3 = countDaysInCalendar('macp_susp_start3', 'macp_susp_end3');
@@ -853,7 +877,7 @@ if (macp2_actual) {
 
 let nxt1 = "S-7 (रु. २१७००-६९१००)", nxt2 = "S-9 (रु. २९२००-९२३००)", nxt3 = "S-11 (रु. ३५४००-११२४००)";
 if(currentLevel === "S-8") { nxt1 = "S-10 (रु. २९२००-९२३००)"; nxt2 = "S-13 (रु. ३५४००-११२४००)"; nxt3 = "S-14 (रु. ३८६००-१२२८००)"; }
-if(currentLevel === "S-10") { nxt1 = "S-13 (रु. ३५4००-११२४००)"; nxt2 = "S-14 (रु. ३८६००-१२२८००)"; nxt3 = "S-15 (रु. ४१८४००-१३२३००)"; }
+if(currentLevel === "S-10") { nxt1 = "S-13 (रु. ३५४००-११२४००)"; nxt2 = "S-14 (रु. ३८६००-१२२८००)"; nxt3 = "S-15 (रु. ४१८४००-१३२३००)"; }
 
 let crGrades = document.querySelectorAll('.cr-grade');
 let isEligible = true;
@@ -864,7 +888,7 @@ if(select.value === "साधारण") isEligible = false;
 let statusText = isEligible ? "<span style='color:green; font-weight:bold;'>✅ पात्र (Eligible)</span>" : "<span style='color:red; font-weight:bold;'>❌ अपात्र (मागील ५ वर्षात 'साधारण' शेरा असल्यामुळे लाभ पुढे ढकलला जाईल)</span>";
 
 resultBox.innerHTML = `
-<strong>🎯 अधिकृत परिपत्रक क्र. मआ/मुने ३१९३ व कॅलेंडर आधारित ब्लॉक नियमांनुसार सुधारित MACPS अहवाल:</strong><br>
+<strong>🎯 परिपत्रक ३१९३ व अचूक 'ब्लॉक सेवा काळ' नियमांनुसार सुधारित MACPS अहवाल:</strong><br>
 • मूळ सेवा रुजू दिनांक: ${joinStr}<br>
 • गोपनीय अहवाल पात्रता स्थिती (CR Status): ${statusText}<br><br>
 <table style='width:100%; font-size:13px;'>
@@ -879,7 +903,7 @@ resultBox.innerHTML = `
 <tr>
     <td><strong>१ ला लाभ</strong></td>
     <td>${t1Years} वर्षे सेवा</td>
-    <td>LWP: ${lwp1} | सस्पेंशन: ${susp1} (एकूण: ${penalty1} दिवस)</td>
+    <td>LWP (फक्त या ब्लॉक मधील): ${lwp1} | सस्पेंशन: ${susp1} (एकूण: ${penalty1} दिवस)</td>
     <td>${macp1_hypo ? formatDMY(macp1_hypo) : "---"}</td>
     <td><span style='color:green;font-weight:bold;'>${macp1_actual ? formatDMY(macp1_actual) : "---"}</span></td>
     <td><span style='color:blue;font-weight:bold;'>${nxt1}</span></td>
@@ -977,7 +1001,6 @@ lwpTotalRow.innerHTML = `<td>ग्रँड एकूण संख्या (Gr
 }
 
 grandTotalLwpGlobal = grandLwpSum;
-document.getElementById('macp_lwp1').value = grandLwpSum;
 
 let leaveTbody = document.querySelector("#allLeavesMonthlyTable tbody"); leaveTbody.innerHTML = "";
 let sortedLeaveMonths = Object.keys(leaveMap).sort((mA, mB) => {
@@ -1064,6 +1087,7 @@ let gtRow = chartBody.insertRow(); gtRow.className = "grand-total-row";
 gtRow.innerHTML = `<td>ग्रँड एकूण संख्या (Grand Total)</td><td>${grandF}</td><td>${grandE}</td><td>${grandG.toFixed(2)}</td><td>${grandH.toFixed(2)}</td><td>${grandR}</td>`;
 }
 generateLeaveAndLwpReports();
+calculateMacp();
 }
 
 function downloadExcel() {
