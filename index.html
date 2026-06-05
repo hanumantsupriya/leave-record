@@ -291,7 +291,7 @@ tr:nth-child(even) { background-color: #f9f9f9; }
             <label>टप्पा वर्ष कालावधी:</label>
             <select id="macp_term3" onchange="calculateMacp()">
                 <option value="10" selected>१० वर्षे (एकूण ३० वर्षे)</option>
-                <option value="12">१२ वर्षे (एकूण ३६ वर्षे)</option>
+                <option value="12">१२ वर्षे (एकूण २४ वर्षे)</option>
                 <option value="6">६ वर्षे (२४+६ = ३० वर्षे)</option>
             </select>
         </div>
@@ -367,7 +367,7 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 </div>
 
 <div class="footer-msg">
-सदर software बद्दल आपल्या काही সূচনা किंवा दुरुस्ती असल्यास श्री. हनुमंत आडागळे मोबाईल 9922987391 यावर whatsapp message करा. धन्यवाद!
+सदर software बद्दल आपल्या काही সূচনা ("परंतु") किंवा दुरुस्ती असल्यास श्री. हनुमंत आडागळे मोबाईल 9922987391 यावर whatsapp message करा. धन्यवाद!
 </div>
 </div>
 
@@ -780,39 +780,33 @@ function checkActualDueDate(hypotheticalDate) {
 function countDaysInCalendar(startId, endId) {
     let sStr = document.getElementById(startId).value;
     let eStr = document.getElementById(endId).value;
-    if(!sStr || !eStr) return 0; // रिकामे असल्यास '०' दिवस मोजेल (Optional Fix)
+    if(!sStr || !eStr) return 0;
     let d1 = parseDMY(sStr);
     let d2 = parseDMY(eStr);
     if(!d1 || !d2 || d2 < d1) return 0;
     return Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 }
 
-// ** विशिष्ट ब्लॉक सेवा काळातील (१० / १२ वर्षे) LWP मोजणारे नवीन फंक्शन **
+// ** दुरुस्त केलेले सुधारित फंक्शन - थेट मूळ कोष्टकातील LWP (E) रकान्याची अचूक बेरीज मोजणे **
 function getBlockLwpDays(joinDateObj, blockYears) {
     if (!joinDateObj) return 0;
     let blockEndDate = new Date(joinDateObj.getFullYear() + blockYears, joinDateObj.getMonth(), joinDateObj.getDate());
     let blockLwpCount = 0;
 
     history.forEach(item => {
-        if (item.type !== "bonus" && item.lwpIntervals && item.lwpIntervals.length > 0) {
-            item.lwpIntervals.forEach(interval => {
-                let s = parseDMY(interval.start);
-                let e = parseDMY(interval.end);
-                if (s && e) {
-                    // जर रजा पूर्णपणे किंवा अंशतः पहिल्या ब्लॉकच्या कालावधीत येत असेल तरच मोजणे
-                    if (s <= blockEndDate) {
-                        let dynamicEnd = (e > blockEndDate) ? blockEndDate : e;
-                        let diff = Math.round((dynamicEnd.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                        if (diff > 0) blockLwpCount += diff;
-                    }
-                }
-            });
+        if (item.type !== "bonus" && item.a) {
+            let entryStartDate = parseDMY(item.a);
+            // जर नोंदीची सुरुवात पहिल्या ब्लॉकच्या अंतिम दिनांकाच्या आत असेल
+            if (entryStartDate && entryStartDate <= blockEndDate) {
+                let lwpValue = parseFloat(item.e) || 0;
+                blockLwpCount += lwpValue;
+            }
         }
     });
     return blockLwpCount;
 }
 
-// ** सुधारित MACPS मोजणी - केवळ ब्लॉक सेवा काळातील LWP आणि ऑप्शनल सस्पेंशन नियम लागू **
+// ** सुधारित MACPS मोजणी - अचूक LWP आणि कॅलेंडर निलंबन दिवस लागू **
 function calculateMacp() {
 let joinStr = document.getElementById('macp_join_date').value;
 let currentLevel = document.getElementById('macp_current_level').value;
@@ -824,12 +818,12 @@ resultBox.innerHTML = "⚠️ कृपया आधी कर्मचाऱ्
 
 let joinDate = parseDMY(joinStr);
 
-// १ ला लाभ: केवळ पहिल्या १०/१२ वर्षांच्या ब्लॉक कालावधीत पडलेली LWP मोजली जाईल (सर्व सेवेची नाही)
+// १ ला लाभ टप्पा वर्ष आणि सुधारित ब्लॉक मधील अचूक LWP
 let t1Years = parseInt(document.getElementById('macp_term1').value) || 10;
 let lwp1 = getBlockLwpDays(joinDate, t1Years); 
 document.getElementById('macp_lwp1').value = lwp1;
 
-let susp1 = countDaysInCalendar('macp_susp_start1', 'macp_susp_end1'); // रिकामे सोडल्यास '०' येईल (Optional)
+let susp1 = countDaysInCalendar('macp_susp_start1', 'macp_susp_end1'); 
 let penalty1 = lwp1 + susp1;
 
 // २ रा लाभ टप्पा
@@ -919,7 +913,7 @@ resultBox.innerHTML = `
 <tr>
     <td><strong>३ रा लाभ</strong></td>
     <td>+${t3Years} वर्षे सेवा</td>
-    <td>LWP: ${lwp3} | सस्पेंशन: ${susp3} (एकूण: ${penalty3} दिवस)</td>
+    <td>LWP: ${lwp3} | सस्पेंशन: ${susp3} (एकूण: ${penalty3} Requirements)</td>
     <td>${macp3_hypo ? formatDMY(macp3_hypo) : "---"}</td>
     <td><span style='color:green;font-weight:bold;'>${macp3_actual ? formatDMY(macp3_actual) : "---"}</span></td>
     <td><span style='color:blue;font-weight:bold;'>${nxt3}</span></td>
