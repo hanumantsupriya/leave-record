@@ -89,12 +89,16 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 </div>
 
 <div class="entry-box">
-<div><label>सुरवातीचा हजर दिनांक (A):</label><input type="text" id="a_start" placeholder="DD/MM/YYYY" readonly></div>
+<div><label>सुरवातीचा हजर दिनांक (A):</label><input type="text" id="a_start" placeholder="DD/MM/YYYY"></div>
 <div><label>शेवटचा हजर दिनांक (B):</label><input type="text" id="b_end" placeholder="DD/MM/YYYY"></div>
 <div><label>बिन पगारी रजा LWP (E):</label><input type="number" id="e_lwp" value="0" oninput="toggleLwpPanel()"></div>
-<div><label>रजेवर गेल्याचा दिनांक (O):</label><input type="text" id="o_leave_start" placeholder="DD/MM/YYYY" readonly></div>
+<div><label>रजेवर गेल्याचा दिनांक (O):</label><input type="text" id="o_leave_start" placeholder="DD/MM/YYYY"></div>
 <div><label>रजा संपल्याचा दिनांक (P):</label><input type="text" id="p_leave_end" placeholder="DD/MM/YYYY"></div>
 <div>
+<div>
+<label for="is_continuous" style="display:inline-block;">👉 सलग रजा आहे का?</label>
+<input type="checkbox" id="is_continuous" onchange="handleContinuousLeave()" style="width:20px; height:20px; display:inline-block; vertical-align:middle;">
+</div>    
 <label>रजेचा प्रकार (Q):</label>
 <select id="q_type">
 <option value="हक्काची रजा">हक्काची रजा</option>
@@ -590,6 +594,8 @@ msgBox.style.color = "#e65100";
 saveBtn.disabled = false; saveBtn.style.opacity = "1";
 msgBox.innerHTML = "✅ दिवस यशस्वीरित्या जुळले आहेत! नोंद जतन करू शकता."; msgBox.style.color = "#2e7d32";
 }
+document.getElementById('is_continuous').checked = false;
+document.getElementById('b_end').disabled = false;
 }
 
 function applyLimits(val, maxVal) {
@@ -599,6 +605,35 @@ function applyLimits(val, maxVal) {
         return maxVal;
     }
     return base + (dec / 100);
+}
+function handleContinuousLeave() {
+    let isCont = document.getElementById('is_continuous').checked;
+    let bEndInput = document.getElementById('b_end');
+    let oLeaveInput = document.getElementById('o_leave_start');
+    let aStartInput = document.getElementById('a_start');
+
+    if (isCont) {
+        // जर सलग रजा असेल तर शेवटचा हजर दिनांक निरंक (---) करा
+        bEndInput.value = "---";
+        bEndInput.disabled = true;
+        // रजेवर गेल्याचा दिनांक हाच सुरवातीचा दिनांक बनेल (कारण मध्ये हजर दिवस नाहीत)
+        oLeaveInput.value = aStartInput.value;
+    } else {
+        bEndInput.disabled = false;
+        bEndInput.value = "";
+        updateLeaveStartDate();
+    }
+}
+    // addEntry() च्या आत या ओळी सुधारित करा:
+let f;
+if (document.getElementById('is_continuous').checked || b === "---") {
+    f = 0; // सलग रजा असल्यास हजर दिवस शून्य
+} else {
+    let d1 = parseDMY(a); 
+    let d2 = parseDMY(b);
+    let totalDaysInRange = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    f = totalDaysInRange - e; 
+    if(f < 0) f = 0;
 }
 
 function addEntry() {
