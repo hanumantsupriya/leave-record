@@ -247,7 +247,7 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 
 <div id="page4" class="tab-content">
 <h3>७ व्या वेतन आयोग परिपत्रकानुसार सुधारित सेवांतर्गत आश्वासित प्रगती योजना (MACPS)</h3>
-<h4 style="color:#e65100; margin-top:10px;">⚙️ प्रत्येक लाभ टप्प्याचा सेवा अवधी, विशिष्ट ब्लॉक मधील स्वयंचलित LWP आणि निलंबन कॅलेंडर:</h4>
+<h4 style="color:#e65100; margin-top:10px;">⚙️ प्रत्येक लाभ टप्प्याचा सेवा अवधी, विशिष्ट BLOCK मधील स्वयंचलित LWP आणि निलंबन कॅलेंडर:</h4>
 <div class="macp-options-grid">
     <div class="macp-stage-card">
         <h5>१ ला लाभ टप्पा</h5>
@@ -288,10 +288,10 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 <h4 style="color:#1a73e8; margin-top:20px;">📋 मागील ५ वर्षांचे गोपनीय अहवाल (CR Grading) नोंदवा:</h4>
 <div class="cr-grid">
 <div><label>वर्ष १ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
-<div><label>वर्ष २ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
+<div><label>वर्ष १ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
 <div><label>वर्ष ३ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
 <div><label>वर्ष ४ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
-<div><label>वर्ष ५ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चाangले</option><option value="साधारण">साधारण</option></select></div>
+<div><label>वर्ष ५ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
 </div>
 
 <div id="macpResult" class="macp-result-box">माहिती भरा, तपशील येथे दिसतील.</div>
@@ -607,7 +607,6 @@ bPick.clear(); pLeavePick.clear();
 toggleLwpPanel();
 }
 
-// ** दुरुस्त केलेले री-कॅल्क्युलेशन इंजिन (१० आणि १५ दिवसांची बेरीज १००% योग्य होईल) **
 function recalculateAndRender() {
 if (history.length === 0) {
     document.querySelector("#recordTable tbody").innerHTML = "";
@@ -629,7 +628,6 @@ history.forEach((item) => {
     } 
     else if (item.type === "annual_extra") {
         let z3_int = Math.floor(curEL), z3_mod = Math.round((curEL % 1) * 100);
-        // 👉 बदल: सरसकट १५ ऐवजी इतिहासामधील जतन केलेली अचूक संख्या (१० किंवा १५) वाचली जाईल
         let extra = parseInt(item.earnedBonus, 10);
         item.k_val = applyLimits(z3_int + extra + Math.floor(z3_mod/11) + (z3_mod%11)/100, 365);
         item.finalEL = item.k_val;
@@ -638,7 +636,7 @@ history.forEach((item) => {
     }
     else {
         if (item.q === "सुरेंडर रजा" || item.b === "---" || item.b === "सुरेंडर रजा" || item.b.trim() === "") {
-            item.f = (item.q === "सुरेंडर rजा") ? 1 : 0;
+            item.f = (item.q === "सुरेंडर रजा") ? 1 : 0;
             item.g = 0; item.h = 0;
         } else {
             let d1 = parseDMY(item.a); let d2 = parseDMY(item.b);
@@ -789,6 +787,7 @@ localStorage.setItem("pmc_leave_history", JSON.stringify(history));
 recalculateAndRender();
 }
 
+// ** अद्ययावत तारीख विभाजन सूत्र (३१/०३/१९९० पूर्वी १० दिवस आणि १/४/१९९० नंतर १५ दिवस) **
 function calculateBonusLeave() {
 let startStr = document.getElementById('bonus_start_date').value;
 let endStr = document.getElementById('bonus_end_date').value;
@@ -811,11 +810,37 @@ history.forEach(item => {
 
 let dutyDays = totalCalendarDays - (totalR + totalE);
 if(dutyDays < 0) dutyDays = 0;
-tempBonusCalculated = Math.floor((dutyDays * 15) / 365);
+
+// 👉 दुरुस्ती: निवडलेल्या कालावधीचे दोन भागात विभाजन करून १० आणि १५ च्या गतीने एकत्रित मोजणी करणे
+let splitDate = parseDMY("01/04/1990");
+let earnedBonusCalculated = 0;
+
+if (dEnd < splitDate) {
+    // पूर्ण अवधी १९९० पूर्वीचा असल्यास (१० दिवस प्रति वर्ष)
+    earnedBonusCalculated = Math.floor((dutyDays * 10) / 365);
+} else if (dStart >= splitDate) {
+    // पूर्ण अवधी १९९० नंतरचा असल्यास (१५ दिवस प्रति वर्ष)
+    earnedBonusCalculated = Math.floor((dutyDays * 15) / 365);
+} else {
+    // अवधी संमिश्र असल्यास (मध्ये १/४/१९९० तारीख येत असल्यास)
+    let preDays = Math.round((splitDate.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24));
+    let postDays = totalCalendarDays - preDays;
+    
+    // गैरहजर रजा/LWP चे गुणोत्तर विभागून प्रत्यक्ष कामाचे दिवस स्वतंत्र करणे
+    let preRatio = preDays / totalCalendarDays;
+    let postRatio = postDays / totalCalendarDays;
+    
+    let preDuty = dutyDays * preRatio;
+    let postDuty = dutyDays * postRatio;
+    
+    earnedBonusCalculated = Math.floor(((preDuty * 10) / 365) + ((postDuty * 15) / 365));
+}
+
+tempBonusCalculated = earnedBonusCalculated;
 tempBonusPeriod = `${startStr} ते ${endStr}`;
 tempTotalDays = totalCalendarDays; tempSpentDays = totalR; tempDutyDays = dutyDays;
 
-document.getElementById('bonusResultMsg').innerHTML = `एकूण दिवस: ${totalCalendarDays} | रजा: ${totalR} | LWP: ${totalE} | कामाचे दिवस: ${dutyDays}<br>🎯 पात्र अतिरिक्त रजा: ${tempBonusCalculated} दिवस`;
+document.getElementById('bonusResultMsg').innerHTML = `एकूण दिवस: ${totalCalendarDays} | रजा: ${totalR} | LWP: ${totalE} | कामाचे दिवस: ${dutyDays}<br>🎯 पात्र अतिरिक्त रजा नियमन: ${tempBonusCalculated} दिवस`;
 document.getElementById('saveBonusBtn').style.display = "inline-block";
 }
 
@@ -904,7 +929,6 @@ function getBlockLwpDaysRange(startDateObj, endDateObj) {
     return blockLwpCount;
 }
 
-// ** सुधारित MACPS मोजणी - त्रुटी दूर केली **
 function calculateMacp() {
 let joinStr = document.getElementById('macp_join_date').value;
 let currentLevel = document.getElementById('macp_current_level').value;
