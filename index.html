@@ -792,6 +792,8 @@ function calculateBonusLeave() {
 let startStr = document.getElementById('bonus_start_date').value;
 let endStr = document.getElementById('bonus_end_date').value;
 if(!startStr || !endStr) { alert("कृपया सुरुवातीचा आणि शेवटचा दिनांक निवडा!"); return; }
+if(history.length === 0) { alert("तक्त्यामध्ये नोंदी असणे आवश्यक आहे!"); return; }
+
 let dStart = parseDMY(startStr); let dEnd = parseDMY(endStr);
 if(!dStart || !dEnd) { alert("कृपया वैध तारखा टाका!"); return; }
 
@@ -799,22 +801,33 @@ let totalCalendarDays = Math.round((dEnd.getTime() - dStart.getTime()) / (1000 *
 let totalR = 0; let totalE = 0;
 
 history.forEach(item => {
-    if (item.type === "bonus" || item.q === "सुरेंडर रजा" || item.type === "annual_extra") return; 
+    // 👉 बदल: जर ही एन्ट्री बोनस (अतिरिक्त रजा) किंवा सुरेंडर रजेची असेल तर ती मोजू नका
+    if (item.type === "bonus" || item.q === "सुरेंडर रजा" || item.type === "annual_extra") {
+        return; 
+    }
+
+    // 👉 बदल: जर तारीख वैध असेल (म्हणजे मजकूर नसेल) तरच गणितामध्ये समाविष्ट करा
     if (item.o && item.p && item.o !== "---" && item.o !== "रोखीकरण" && item.p !== "---") {
-        let itemO = parseDMY(item.o); let itemP = parseDMY(item.p);
+        let itemO = parseDMY(item.o); 
+        let itemP = parseDMY(item.p);
+        
         if(itemO && itemP && itemO >= dStart && itemP <= dEnd) {
-            totalR += (parseFloat(item.r_diff) || 0); totalE += (parseFloat(item.e) || 0);
+            totalR += (parseFloat(item.r_diff) || 0); 
+            totalE += (parseFloat(item.e) || 0);
         }
     }
 });
 
 let dutyDays = totalCalendarDays - (totalR + totalE);
 if(dutyDays < 0) dutyDays = 0;
-tempBonusCalculated = Math.floor((dutyDays * 15) / 365);
+let rawExtraLeave = (dutyDays * 15) / 365;
+let extraLeaveFloor = Math.floor(rawExtraLeave);
+
+tempBonusCalculated = extraLeaveFloor;
 tempBonusPeriod = `${startStr} ते ${endStr}`;
 tempTotalDays = totalCalendarDays; tempSpentDays = totalR; tempDutyDays = dutyDays;
 
-document.getElementById('bonusResultMsg').innerHTML = `एकूण दिवस: ${totalCalendarDays} | रजा: ${totalR} | LWP: ${totalE} | कामाचे दिवस: ${dutyDays}<br>🎯 पात्र अतिरिक्त रजा: ${tempBonusCalculated} दिवस`;
+document.getElementById('bonusResultMsg').innerHTML = `निवडलेल्या अवधीचे एकूण दिवस: ${totalCalendarDays} दिवस<br>सर्व रजा दिवस: ${totalR} दिवस | एकूण LWP: ${totalE} दिवस<br>प्रत्यक्ष कामाचे दिवस (Duty Days): ${dutyDays} दिवस<br>🎯 एकूण पात्र अतिरिक्त रजा (केवळ मुख्य पूर्णांक संख्या): ${extraLeaveFloor} दिवस`;
 document.getElementById('saveBonusBtn').style.display = "inline-block";
 }
 
