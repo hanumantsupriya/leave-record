@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="mr">
 <head>
@@ -100,6 +99,10 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 <input type="checkbox" id="is_continuous" onchange="handleContinuousLeave()" style="width:20px; height:20px; display:inline-block; vertical-align:middle;">
 </div>    
 <label>रजेचा प्रकार (Q):</label>
+<select id="q_type">
+<option value="हक्काची रजा">हक्काची रजा</option>
+<option value="वैद्यकीय रजा">वैद्यकीय रजा</option>
+<option value="विशेष रजा">विशेष रजा</option>
 <select id="q_type" onchange="handleSurrenderLeaveType()">
     <option value="हक्काची रजा">हक्काची रजा</option>
     <option value="वैद्यकीय रजा">वैद्यकीय रजा</option>
@@ -657,8 +660,16 @@ isFirstEntry = false;
 let curEL = history.length > 0 ? history[history.length-1].finalEL : initialValues.el;
 let curML = history.length > 0 ? history[history.length-1].finalML : initialValues.ml;
 
+let f = 0;
+let g = 0;
+let h = 0;
 let f = 0, g = 0, h = 0;
 
+// 👉 बदल: जर सलग रजा असेल (म्हणजे 'B' मध्ये तारीख नसेल किंवा चेकबॉक्स टिक असेल)
+if (document.getElementById('is_continuous') && document.getElementById('is_continuous').checked || b === "---" || b.trim() === "") {
+    f = 0;  // हजर दिवस शून्य
+    g = 0;  // साठलेली EL शून्य
+    h = 0;  // साठलेली ML शून्य
 if (q === "सुरेंडर रजा") {
     // सुरेंडर रजेच्या वेळी हजर दिवस १ दिवस धरला जाईल (किंवा ० करण्यासाठी f=0 ठेवा)
     f = 1; 
@@ -667,6 +678,9 @@ if (q === "सुरेंडर रजा") {
 } else if (document.getElementById('is_continuous') && document.getElementById('is_continuous').checked || b === "---" || b.trim() === "") {
     f = 0; g = 0; h = 0;
 } else {
+    // नेहमीची पद्धत जर कर्मचारी कामावर हजर झाला असेल तर
+    let d1 = parseDMY(a); 
+    let d2 = parseDMY(b);
     let d1 = parseDMY(a); let d2 = parseDMY(b);
     if (d1 && d2) {
         let totalDaysInRange = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -685,7 +699,10 @@ let aa3_int = Math.floor(curML), aa3_mod = Math.round((curML % 1) * 100);
 let h_int = Math.floor(h), h_mod = Math.round((h % 1) * 100);
 let l_val = applyLimits(aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100, 120);
 
+let do1 = parseDMY(o); let dp1 = parseDMY(p);
 let r_diff = 0;
+if (do1 && dp1) {
+    r_diff = Math.round((dp1.getTime() - do1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 if (q === "सुरेंडर रजा") {
     // सुरेंडर रजेसाठी युझरला किती रजा रोखवायच्या आहेत (उदा. १५ किंवा ३०) विचारण्यासाठी प्रॉम्ट येईल
     let surrenderDays = parseInt(prompt("रोखीकरण (Surrender) करायचे एकूण दिवस टाका (उदा. 15 किंवा 30):"), 10);
@@ -705,14 +722,18 @@ let finalEL, finalML;
 let k_base = Math.floor(k_val), k_dec = Math.round((k_val % 1) * 100) / 100;
 let l_base = Math.floor(l_val), l_dec = Math.round((l_val % 1) * 100) / 100;
 
+if (q === "हक्काची रजा") {
 // 👉 फॉर्म्युला बदल: हक्काची आणि सुरेंडर रजा दोघांमध्ये केवळ EL खर्च होणार
 if (q === "हक्काची रजा" || q === "सुरेंडर रजा") {
     finalEL = (r_diff >= k_base) ? k_dec : (k_base - r_diff + k_dec);
+    finalML = l_val;
     finalML = l_val; // मेडिकल रजा सुरक्षित राहील
 } else if (q === "वैद्यकीय रजा") {
     finalEL = applyLimits(Math.max(0, k_base - Math.max(0, r_diff - l_base) + k_dec), 365);
     finalML = (r_diff >= l_base) ? l_dec : (l_base - r_diff + l_dec);
 } else { 
+    finalEL = k_val; 
+    finalML = l_val; 
     finalEL = k_val; finalML = l_val; 
 }
 
@@ -723,6 +744,10 @@ let lwpIntervals = [];
 if(e > 0) {
     let startInputs = document.querySelectorAll('.lwp-start-pick');
     let endInputs = document.querySelectorAll('.lwp-end-pick');
+    startInputs.forEach((input, i) => {
+        lwpIntervals.push({ start: input.value, end: endInputs[i].value });
+    });
+}
     startInputs.forEach((input, i) => { lwpIntervals.push({ start: input.value, end: endInputs[i].value }); });
 }
 
@@ -737,9 +762,13 @@ history.push({
     q, r_diff, finalEL, finalML, lwpIntervals 
 });
 
+// डेटामध्ये 'b' ची किंमत "---" म्हणून जतन करणे जेणेकरून रेंडरिंगमध्ये एरर येणार नाही
+history.push({ type: "regular", a, b: (b === "" ? "---" : b), e, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML, lwpIntervals });
 localStorage.setItem("pmc_leave_history", JSON.stringify(history));
+
 renderTable();
 
+let nextA = formatDMY(nextDay(parseDMY(p)));
 // पुढील एन्ट्रीसाठी सुरवातीचा दिनांक ठरवणे (सुरेंडर रजेच्या वेळी पुढील दिनांक बदलणार नाही कारण कर्मचारी हजरच आहे)
 let nextA = (q === "सुरेंडर रजा") ? a : formatDMY(nextDay(parseDMY(p)));
 document.getElementById('a_start').value = nextA;
@@ -747,70 +776,81 @@ document.getElementById('o_leave_start').value = nextA;
 document.getElementById('e_lwp').value = "0";
 
 // रिसेट पर्याय
+if(document.getElementById('is_continuous')) {
+    document.getElementById('is_continuous').checked = false;
+}
 if(document.getElementById('is_continuous')) document.getElementById('is_continuous').checked = false;
 document.getElementById('b_end').disabled = false;
 document.getElementById('p_leave_end').disabled = false;
 document.getElementById('q_type').value = "हक्काची रजा";
 
+bPick.clear(); 
+pLeavePick.clear();
 bPick.clear(); pLeavePick.clear();
 toggleLwpPanel();
 }
-function addAnnualExtraLeaves() {
-if (history.length === 0) { alert("माहिती भरण्यापूर्वी रजा जमा करता येणार नाही!"); return; }
+function calculateBonusLeave() {
+let startStr = document.getElementById('bonus_start_date').value;
+let endStr = document.getElementById('bonus_end_date').value;
+if(!startStr || !endStr) { alert("कृपया सुरुवातीचा आणि शेवटचा दिनांक निवडा!"); return; }
+if(history.length === 0) { alert("तक्त्यामध्ये नोंदी असणे आवश्यक आहे!"); return; }
 
-let curEL = history[history.length - 1].finalEL;
-let curML = history[history.length - 1].finalML;
+let dStart = parseDMY(startStr); let dEnd = parseDMY(endStr);
+if(!dStart || !dEnd) { alert("कृपया वैध तारखा टाका!"); return; }
 
-// १. युझरकडून कोणत्या वर्षाची रजा जमा करायची आहे ते विचारणे
-let yearInput = prompt("ज्या वर्षाची अतिरिक्त रजा जमा करायची आहे ते वर्ष टाका (उदा. 1989 किंवा 1995):");
-if (!yearInput || isNaN(yearInput)) {
-    alert("कृपया वैध वर्ष टाका!");
-    return;
-}
-let year = parseInt(yearInput, 10);
+let totalCalendarDays = Math.round((dEnd.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+let totalR = 0; let totalE = 0;
 
-// २. नियमानुसार रजेचे दिवस ठरवणे (३१/०३/१९९० पूर्वी १० रजा, नंतर १५ रजा)
-let extraDays = 15; // डिफॉल्ट १५ रजा
-if (year < 1990) {
-    extraDays = 10;
-} else if (year === 1990) {
-    // जर वर्ष नेमके १९९० असेल, तर अधिक अचूकतेसाठी युझरला तारीख विचारू शकता किंवा थेट १५ लागू करू शकता
-    let isAfterApril = confirm("रजा जमा करण्याचा कालावधी ०१/०४/१९९० नंतरचा आहे का?\n(होय असल्यास 'OK' दाबा [१५ रजा], ३१/०३/१९९० पूर्वीचा असल्यास 'Cancel' दाबा [१० रजा])");
-    extraDays = isAfterApril ? 15 : 10;
-}
+history.forEach(item => {
+    // 👉 बदल: जर ही एन्ट्री बोनस (अतिरिक्त रजा) किंवा सुरेंडर रजेची असेल तर ती मोजू नका
+    if (item.type === "bonus" || item.q === "सुरेंडर रजा" || item.type === "annual_extra") {
+        return; 
+    }
 
-// ३. नवीन शिल्लक मोजणे (केवळ EL मध्ये भर पडेल)
-let z3_int = Math.floor(curEL), z3_mod = Math.round((curEL % 1) * 100);
-let k_val = applyLimits(z3_int + extraDays + Math.floor(z3_mod/11) + (z3_mod%11)/100, 365);
-
-// इतिहासामध्ये नोंद जतन करणे
-history.push({
-    type: "annual_extra",
-    a: `अतिरिक्त रजा (${year})`,
-    b: "---", e: 0, f: 0, g: 0, h: 0,
-    k_val,
-    l_val: curML,
-    o: "वार्षिक जमा",
-    p: extraDays + " दिवस",
-    q: "अतिरिक्त सेवा रजा",
-    r_diff: 0,
-    finalEL: k_val,
-    finalML: curML,
-    lwpIntervals: []
+    // 👉 बदल: जर तारीख वैध असेल (म्हणजे मजकूर नसेल) तरच गणितामध्ये समाविष्ट करा
+    if (item.o && item.p && item.o !== "---" && item.o !== "रोखीकरण" && item.p !== "---") {
+        let itemO = parseDMY(item.o); 
+        let itemP = parseDMY(item.p);
+        
+        if(itemO && itemP && itemO >= dStart && itemP <= dEnd) {
+            totalR += (parseFloat(item.r_diff) || 0); 
+            totalE += (parseFloat(item.e) || 0);
+        }
+    }
 });
 
+let dutyDays = totalCalendarDays - (totalR + totalE);
+if(dutyDays < 0) dutyDays = 0;
+let rawExtraLeave = (dutyDays * 15) / 365;
+let extraLeaveFloor = Math.floor(rawExtraLeave);
+
+tempBonusCalculated = extraLeaveFloor;
+tempBonusPeriod = `${startStr} ते ${endStr}`;
+tempTotalDays = totalCalendarDays; tempSpentDays = totalR; tempDutyDays = dutyDays;
+
+document.getElementById('bonusResultMsg').innerHTML = `निवडलेल्या अवधीचे एकूण दिवस: ${totalCalendarDays} दिवस<br>सर्व रजा दिवस: ${totalR} दिवस | एकूण LWP: ${totalE} दिवस<br>प्रत्यक्ष कामाचे दिवस (Duty Days): ${dutyDays} दिवस<br>🎯 एकूण पात्र अतिरिक्त रजा (केवळ मुख्य पूर्णांक संख्या): ${extraLeaveFloor} दिवस`;
+document.getElementById('saveBonusBtn').style.display = "inline-block";
+}
+
+function saveBonusToTable() {
+if(tempBonusCalculated <= 0) return;
+let lastRecord = history[history.length - 1];
+let currentEL = lastRecord.finalEL; let currentML = lastRecord.finalML;
+let newEL_int = Math.floor(currentEL), newEL_mod = Math.round((currentEL % 1) * 100);
+let updatedEL = applyLimits(newEL_int + tempBonusCalculated + (newEL_mod / 100), 365);
+let nextStartDateStr = lastRecord.type === "bonus" ? lastRecord.nextA : formatDMY(nextDay(parseDMY(lastRecord.p)));
+
+history.push({
+type: "bonus", details: `अत्यावश्यक सेवा अतिरिक्त रजा अवधी (${tempBonusPeriod})`, earnedBonus: tempBonusCalculated,
+finalEL: updatedEL, finalML: currentML, nextA: nextStartDateStr,
+bonusStart: tempBonusPeriod.split(" ते ")[0], bonusEnd: tempBonusPeriod.split(" ते ")[1],
+totalDays: tempTotalDays, spentDays: tempSpentDays, dutyDays: tempDutyDays
+});
 localStorage.setItem("pmc_leave_history", JSON.stringify(history));
 renderTable();
-
-// पुढील एन्ट्रीसाठी दिनांक स्थिर ठेवणे
-let lastEntry = history[history.length - 2]; 
-if (lastEntry && lastEntry.p !== "---" && lastEntry.p !== "") {
-    try {
-        let nextA = formatDMY(nextDay(parseDMY(lastEntry.p)));
-        document.getElementById('a_start').value = nextA;
-        document.getElementById('o_leave_start').value = nextA;
-    } catch(e){}
-}
+document.getElementById('bonusResultMsg').innerText = "अकलूज/अतिरिक्त रजा यशस्वीरित्या तक्त्यात जमा केली आहे!";
+document.getElementById('saveBonusBtn').style.display = "none";
+tempBonusCalculated = 0;
 }
 
 function manualPageBreak() {
@@ -857,13 +897,13 @@ joinDate: document.getElementById('info_join_date').value, retireDate: document.
 function checkActualDueDate(hypotheticalDate) {
     if (!hypotheticalDate) return null;
     let actualDate = new Date(hypotheticalDate.getTime());
-    
+
     for (let i = 0; i < history.length; i++) {
         let item = history[i];
         if (item.type !== "bonus" && item.o && item.p) {
             let leaveStart = parseDMY(item.o);
             let leaveEnd = parseDMY(item.p);
-            
+
             if (actualDate >= leaveStart && actualDate <= leaveEnd) {
                 actualDate = nextDay(leaveEnd);
             }
