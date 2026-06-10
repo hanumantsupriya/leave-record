@@ -755,54 +755,62 @@ document.getElementById('q_type').value = "हक्काची रजा";
 bPick.clear(); pLeavePick.clear();
 toggleLwpPanel();
 }
-function calculateBonusLeave() {
-let startStr = document.getElementById('bonus_start_date').value;
-let endStr = document.getElementById('bonus_end_date').value;
-if(!startStr || !endStr) { alert("कृपया सुरुवातीचा आणि शेवटचा दिनांक निवडा!"); return; }
-if(history.length === 0) { alert("तक्त्यामध्ये नोंदी असणे आवश्यक आहे!"); return; }
+function addAnnualExtraLeaves() {
+if (history.length === 0) { alert("माहिती भरण्यापूर्वी रजा जमा करता येणार नाही!"); return; }
 
-let dStart = parseDMY(startStr); let dEnd = parseDMY(endStr);
-let totalCalendarDays = Math.round((dEnd.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-let totalR = 0; let totalE = 0;
+let curEL = history[history.length - 1].finalEL;
+let curML = history[history.length - 1].finalML;
 
-history.forEach(item => {
-let itemO = parseDMY(item.o); let itemP = parseDMY(item.p);
-if(itemO && itemP && itemO >= dStart && itemP <= dEnd) {
-totalR += item.r_diff; totalE += item.e;
+// १. युझरकडून कोणत्या वर्षाची रजा जमा करायची आहे ते विचारणे
+let yearInput = prompt("ज्या वर्षाची अतिरिक्त रजा जमा करायची आहे ते वर्ष टाका (उदा. 1989 किंवा 1995):");
+if (!yearInput || isNaN(yearInput)) {
+    alert("कृपया वैध वर्ष टाका!");
+    return;
 }
-});
-let dutyDays = totalCalendarDays - (totalR + totalE);
-if(dutyDays < 0) dutyDays = 0;
-let rawExtraLeave = (dutyDays * 15) / 365;
-let extraLeaveFloor = Math.floor(rawExtraLeave);
+let year = parseInt(yearInput, 10);
 
-tempBonusCalculated = extraLeaveFloor;
-tempBonusPeriod = `${startStr} ते ${endStr}`;
-tempTotalDays = totalCalendarDays; tempSpentDays = totalR; tempDutyDays = dutyDays;
-
-document.getElementById('bonusResultMsg').innerHTML = `निवडलेल्या अवधीचे एकूण दिवस: ${totalCalendarDays} दिवस<br>सर्व रजा दिवस: ${totalR} दिवस | एकूण LWP: ${totalE} दिवस<br>प्रत्यक्ष कामाचे दिवस (Duty Days): ${dutyDays} दिवस<br>🎯 एकूण पात्र अतिरिक्त रजा (केवळ मुख्य पूर्णांक संख्या): ${extraLeaveFloor} दिवस`;
-document.getElementById('saveBonusBtn').style.display = "inline-block";
+// २. नियमानुसार रजेचे दिवस ठरवणे (३१/०३/१९९० पूर्वी १० रजा, नंतर १५ रजा)
+let extraDays = 15; // डिफॉल्ट १५ रजा
+if (year < 1990) {
+    extraDays = 10;
+} else if (year === 1990) {
+    // जर वर्ष नेमके १९९० असेल, तर अधिक अचूकतेसाठी युझरला तारीख विचारू शकता किंवा थेट १५ लागू करू शकता
+    let isAfterApril = confirm("रजा जमा करण्याचा कालावधी ०१/०४/१९९० नंतरचा आहे का?\n(होय असल्यास 'OK' दाबा [१५ रजा], ३१/०३/१९९० पूर्वीचा असल्यास 'Cancel' दाबा [१० रजा])");
+    extraDays = isAfterApril ? 15 : 10;
 }
 
-function saveBonusToTable() {
-if(tempBonusCalculated <= 0) return;
-let lastRecord = history[history.length - 1];
-let currentEL = lastRecord.finalEL; let currentML = lastRecord.finalML;
-let newEL_int = Math.floor(currentEL), newEL_mod = Math.round((currentEL % 1) * 100);
-let updatedEL = applyLimits(newEL_int + tempBonusCalculated + (newEL_mod / 100), 365);
-let nextStartDateStr = lastRecord.type === "bonus" ? lastRecord.nextA : formatDMY(nextDay(parseDMY(lastRecord.p)));
+// ३. नवीन शिल्लक मोजणे (केवळ EL मध्ये भर पडेल)
+let z3_int = Math.floor(curEL), z3_mod = Math.round((curEL % 1) * 100);
+let k_val = applyLimits(z3_int + extraDays + Math.floor(z3_mod/11) + (z3_mod%11)/100, 365);
 
+// इतिहासामध्ये नोंद जतन करणे
 history.push({
-type: "bonus", details: `अत्यावश्यक सेवा अतिरिक्त रजा अवधी (${tempBonusPeriod})`, earnedBonus: tempBonusCalculated,
-finalEL: updatedEL, finalML: currentML, nextA: nextStartDateStr,
-bonusStart: tempBonusPeriod.split(" ते ")[0], bonusEnd: tempBonusPeriod.split(" ते ")[1],
-totalDays: tempTotalDays, spentDays: tempSpentDays, dutyDays: tempDutyDays
+    type: "annual_extra",
+    a: `अतिरिक्त रजा (${year})`,
+    b: "---", e: 0, f: 0, g: 0, h: 0,
+    k_val,
+    l_val: curML,
+    o: "वार्षिक जमा",
+    p: extraDays + " दिवस",
+    q: "अतिरिक्त सेवा रजा",
+    r_diff: 0,
+    finalEL: k_val,
+    finalML: curML,
+    lwpIntervals: []
 });
+
 localStorage.setItem("pmc_leave_history", JSON.stringify(history));
 renderTable();
-document.getElementById('bonusResultMsg').innerText = "अकलूज/अतिरिक्त रजा यशस्वीरित्या तक्त्यात जमा केली आहे!";
-document.getElementById('saveBonusBtn').style.display = "none";
-tempBonusCalculated = 0;
+
+// पुढील एन्ट्रीसाठी दिनांक स्थिर ठेवणे
+let lastEntry = history[history.length - 2]; 
+if (lastEntry && lastEntry.p !== "---" && lastEntry.p !== "") {
+    try {
+        let nextA = formatDMY(nextDay(parseDMY(lastEntry.p)));
+        document.getElementById('a_start').value = nextA;
+        document.getElementById('o_leave_start').value = nextA;
+    } catch(e){}
+}
 }
 
 function manualPageBreak() {
