@@ -655,11 +655,29 @@ isFirstEntry = false;
 
 let curEL = history.length > 0 ? history[history.length-1].finalEL : initialValues.el;
 let curML = history.length > 0 ? history[history.length-1].finalML : initialValues.ml;
-let d1 = parseDMY(a); let d2 = parseDMY(b);
-let totalDaysInRange = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-let f = totalDaysInRange - e; if(f < 0) f = 0;
-let g = Math.floor(f / 11) + (f % 11) / 100;
-let h = Math.floor(f / 30) + (f % 30) / 100;
+
+let f = 0;
+let g = 0;
+let h = 0;
+
+// 👉 बदल: जर सलग रजा असेल (म्हणजे 'B' मध्ये तारीख नसेल किंवा चेकबॉक्स टिक असेल)
+if (document.getElementById('is_continuous') && document.getElementById('is_continuous').checked || b === "---" || b.trim() === "") {
+    f = 0;  // हजर दिवस शून्य
+    g = 0;  // साठलेली EL शून्य
+    h = 0;  // साठलेली ML शून्य
+} else {
+    // नेहमीची पद्धत जर कर्मचारी कामावर हजर झाला असेल तर
+    let d1 = parseDMY(a); 
+    let d2 = parseDMY(b);
+    if (d1 && d2) {
+        let totalDaysInRange = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        f = totalDaysInRange - e; 
+        if(f < 0) f = 0;
+        g = Math.floor(f / 11) + (f % 11) / 100;
+        h = Math.floor(f / 30) + (f % 30) / 100;
+    }
+}
+
 let z3_int = Math.floor(curEL), z3_mod = Math.round((curEL % 1) * 100);
 let g_int = Math.floor(g), g_mod = Math.round((g % 1) * 100);
 let k_val = applyLimits(z3_int + g_int + Math.floor((z3_mod + g_mod)/11) + ((z3_mod + g_mod)%11)/100, 365);
@@ -667,43 +685,61 @@ let k_val = applyLimits(z3_int + g_int + Math.floor((z3_mod + g_mod)/11) + ((z3_
 let aa3_int = Math.floor(curML), aa3_mod = Math.round((curML % 1) * 100);
 let h_int = Math.floor(h), h_mod = Math.round((h % 1) * 100);
 let l_val = applyLimits(aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100, 120);
+
 let do1 = parseDMY(o); let dp1 = parseDMY(p);
-let r_diff = Math.round((dp1.getTime() - do1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+let r_diff = 0;
+if (do1 && dp1) {
+    r_diff = Math.round((dp1.getTime() - do1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+}
 
 let finalEL, finalML;
 let k_base = Math.floor(k_val), k_dec = Math.round((k_val % 1) * 100) / 100;
 let l_base = Math.floor(l_val), l_dec = Math.round((l_val % 1) * 100) / 100;
 
 if (q === "हक्काची रजा") {
-finalEL = (r_diff >= k_base) ? k_dec : (k_base - r_diff + k_dec);
-finalML = l_val;
+    finalEL = (r_diff >= k_base) ? k_dec : (k_base - r_diff + k_dec);
+    finalML = l_val;
 } else if (q === "वैद्यकीय रजा") {
-finalEL = applyLimits(Math.max(0, k_base - Math.max(0, r_diff - l_base) + k_dec), 365);
-finalML = (r_diff >= l_base) ? l_dec : (l_base - r_diff + l_dec);
-} else { finalEL = k_val; finalML = l_val; }
+    finalEL = applyLimits(Math.max(0, k_base - Math.max(0, r_diff - l_base) + k_dec), 365);
+    finalML = (r_diff >= l_base) ? l_dec : (l_base - r_diff + l_dec);
+} else { 
+    finalEL = k_val; 
+    finalML = l_val; 
+}
 
-finalEL = applyLimits(finalEL, 365); finalML = applyLimits(finalML, 120);
+finalEL = applyLimits(finalEL, 365); 
+finalML = applyLimits(finalML, 120);
 
 let lwpIntervals = [];
 if(e > 0) {
-let startInputs = document.querySelectorAll('.lwp-start-pick');
-let endInputs = document.querySelectorAll('.lwp-end-pick');
-startInputs.forEach((input, i) => {
-lwpIntervals.push({ start: input.value, end: endInputs[i].value });
-});
+    let startInputs = document.querySelectorAll('.lwp-start-pick');
+    let endInputs = document.querySelectorAll('.lwp-end-pick');
+    startInputs.forEach((input, i) => {
+        lwpIntervals.push({ start: input.value, end: endInputs[i].value });
+    });
 }
 
-history.push({ type: "regular", a, b, e, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML, lwpIntervals });
+// डेटामध्ये 'b' ची किंमत "---" म्हणून जतन करणे जेणेकरून रेंडरिंगमध्ये एरर येणार नाही
+history.push({ type: "regular", a, b: (b === "" ? "---" : b), e, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML, lwpIntervals });
 localStorage.setItem("pmc_leave_history", JSON.stringify(history));
+
 renderTable();
+
 let nextA = formatDMY(nextDay(parseDMY(p)));
 document.getElementById('a_start').value = nextA;
 document.getElementById('o_leave_start').value = nextA;
 document.getElementById('e_lwp').value = "0";
-bPick.clear(); pLeavePick.clear();
+
+// रिसेट पर्याय
+if(document.getElementById('is_continuous')) {
+    document.getElementById('is_continuous').checked = false;
+}
+document.getElementById('b_end').disabled = false;
+
+bPick.clear(); 
+pLeavePick.clear();
 toggleLwpPanel();
 }
-
 function calculateBonusLeave() {
 let startStr = document.getElementById('bonus_start_date').value;
 let endStr = document.getElementById('bonus_end_date').value;
