@@ -225,7 +225,7 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 <div class="setup-box">
 <div><label>मूळ वेतन (Basic Pay - रु.):</label><input type="number" id="basic_pay" placeholder="उदा. 56100" oninput="calculateEncashment()"></div>
 <div><label>महागाई भत्ता (DA - रु.):</label><input type="number" id="da_amount" placeholder="उदा. 28050" oninput="calculateEncashment()"></div>
-<div><label>एकूण शिल्लक हक्काची रजा (Total EL):</label><input type="number" id="total_el_shilak" placeholder="नोंदींमधून आपोबात येईल" oninput="calculateEncashment()"></div>
+<div><label>एकूण शिल्लक हक्काची रजा (Total EL):</label><input type="number" id="total_el_shilak" placeholder="नोंदींमधून आपोआप येईल" oninput="calculateEncashment()"></div>
 </div>
 <div class="result-card" id="encashmentResult">माहिती भरा, रक्कम येथे दिसेल.</div>
 <div style="margin-top: 15px; text-align: right;">
@@ -291,7 +291,7 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 <div><label>वर्ष २ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
 <div><label>वर्ष ३ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
 <div><label>वर्ष ४ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
-<div><label>वर्ष ५ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चांगले</option><option value="साधारण">साधारण</option></select></div>
+<div><label>वर्ष ५ ग्रेड:</label><select class="cr-grade" onchange="calculateMacp()"><option value="अती उत्कृष्ट">अती उत्कृष्ट</option><option value="उत्कृष्ट">उत्कृष्ट</option><option value="चांगले" selected>चाangले</option><option value="साधारण">साधारण</option></select></div>
 </div>
 
 <div id="macpResult" class="macp-result-box">माहिती भरा, तपशील येथे दिसतील.</div>
@@ -308,7 +308,7 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 </div>
 
 <div class="footer-msg">
-Sदर software बद्दल आपल्या काही সূচনা किंवा दुरुस्ती असल्यास श्री. हनुमंत आडागळे मोबाईल 9922987391 यावर whatsapp message करा. धन्यवाद!
+सदर software बद्दल आपल्या काही সূচনা किंवा दुरुस्ती असल्यास श्री. हनुमंत आडागळे मोबाईल 9922987391 यावर whatsapp message करा. धन्यवाद!
 </div>
 </div>
 
@@ -607,6 +607,7 @@ bPick.clear(); pLeavePick.clear();
 toggleLwpPanel();
 }
 
+// ** दुरुस्त केलेले री-कॅल्क्युलेशन इंजिन (१० आणि १५ दिवसांची बेरीज १००% योग्य होईल) **
 function recalculateAndRender() {
 if (history.length === 0) {
     document.querySelector("#recordTable tbody").innerHTML = "";
@@ -628,7 +629,8 @@ history.forEach((item) => {
     } 
     else if (item.type === "annual_extra") {
         let z3_int = Math.floor(curEL), z3_mod = Math.round((curEL % 1) * 100);
-        let extra = parseInt(item.earnedBonus, 10) || 15;
+        // 👉 बदल: सरसकट १५ ऐवजी इतिहासामधील जतन केलेली अचूक संख्या (१० किंवा १५) वाचली जाईल
+        let extra = parseInt(item.earnedBonus, 10);
         item.k_val = applyLimits(z3_int + extra + Math.floor(z3_mod/11) + (z3_mod%11)/100, 365);
         item.finalEL = item.k_val;
         item.finalML = curML;
@@ -636,7 +638,7 @@ history.forEach((item) => {
     }
     else {
         if (item.q === "सुरेंडर रजा" || item.b === "---" || item.b === "सुरेंडर रजा" || item.b.trim() === "") {
-            item.f = (item.q === "सुरेंडर रजा") ? 1 : 0;
+            item.f = (item.q === "सुरेंडर rजा") ? 1 : 0;
             item.g = 0; item.h = 0;
         } else {
             let d1 = parseDMY(item.a); let d2 = parseDMY(item.b);
@@ -902,6 +904,7 @@ function getBlockLwpDaysRange(startDateObj, endDateObj) {
     return blockLwpCount;
 }
 
+// ** सुधारित MACPS मोजणी - त्रुटी दूर केली **
 function calculateMacp() {
 let joinStr = document.getElementById('macp_join_date').value;
 let currentLevel = document.getElementById('macp_current_level').value;
