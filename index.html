@@ -100,10 +100,11 @@ tr:nth-child(even) { background-color: #f9f9f9; }
 <input type="checkbox" id="is_continuous" onchange="handleContinuousLeave()" style="width:20px; height:20px; display:inline-block; vertical-align:middle;">
 </div>    
 <label>रजेचा प्रकार (Q):</label>
-<select id="q_type">
-<option value="हक्काची रजा">हक्काची रजा</option>
-<option value="वैद्यकीय रजा">वैद्यकीय रजा</option>
-<option value="विशेष रजा">विशेष रजा</option>
+<select id="q_type" onchange="handleSurrenderLeaveType()">
+    <option value="हक्काची रजा">हक्काची रजा</option>
+    <option value="वैद्यकीय रजा">वैद्यकीय रजा</option>
+    <option value="विशेष रजा">विशेष रजा</option>
+    <option value="सुरेंडर रजा">सुरेंडर रजा (Surrender Leave)</option> <!-- नवीन पर्याय -->
 </select>
 </div>
 <div class="btn-group">
@@ -656,19 +657,17 @@ isFirstEntry = false;
 let curEL = history.length > 0 ? history[history.length-1].finalEL : initialValues.el;
 let curML = history.length > 0 ? history[history.length-1].finalML : initialValues.ml;
 
-let f = 0;
-let g = 0;
-let h = 0;
+let f = 0, g = 0, h = 0;
 
-// 👉 बदल: जर सलग रजा असेल (म्हणजे 'B' मध्ये तारीख नसेल किंवा चेकबॉक्स टिक असेल)
-if (document.getElementById('is_continuous') && document.getElementById('is_continuous').checked || b === "---" || b.trim() === "") {
-    f = 0;  // हजर दिवस शून्य
-    g = 0;  // साठलेली EL शून्य
-    h = 0;  // साठलेली ML शून्य
+if (q === "सुरेंडर रजा") {
+    // सुरेंडर रजेच्या वेळी हजर दिवस १ दिवस धरला जाईल (किंवा ० करण्यासाठी f=0 ठेवा)
+    f = 1; 
+    g = 0;
+    h = 0;
+} else if (document.getElementById('is_continuous') && document.getElementById('is_continuous').checked || b === "---" || b.trim() === "") {
+    f = 0; g = 0; h = 0;
 } else {
-    // नेहमीची पद्धत जर कर्मचारी कामावर हजर झाला असेल तर
-    let d1 = parseDMY(a); 
-    let d2 = parseDMY(b);
+    let d1 = parseDMY(a); let d2 = parseDMY(b);
     if (d1 && d2) {
         let totalDaysInRange = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         f = totalDaysInRange - e; 
@@ -686,25 +685,35 @@ let aa3_int = Math.floor(curML), aa3_mod = Math.round((curML % 1) * 100);
 let h_int = Math.floor(h), h_mod = Math.round((h % 1) * 100);
 let l_val = applyLimits(aa3_int + h_int + Math.floor((aa3_mod + h_mod)/30) + ((aa3_mod + h_mod)%30)/100, 120);
 
-let do1 = parseDMY(o); let dp1 = parseDMY(p);
 let r_diff = 0;
-if (do1 && dp1) {
-    r_diff = Math.round((dp1.getTime() - do1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+if (q === "सुरेंडर रजा") {
+    // सुरेंडर रजेसाठी युझरला किती रजा रोखवायच्या आहेत (उदा. १५ किंवा ३०) विचारण्यासाठी प्रॉम्ट येईल
+    let surrenderDays = parseInt(prompt("रोखीकरण (Surrender) करायचे एकूण दिवस टाका (उदा. 15 किंवा 30):"), 10);
+    if (isNaN(surrenderDays) || surrenderDays <= 0) {
+        alert("कृपया वैध रजा दिवस टाका!");
+        return;
+    }
+    r_diff = surrenderDays;
+} else {
+    let do1 = parseDMY(o); let dp1 = parseDMY(p);
+    if (do1 && dp1) {
+        r_diff = Math.round((dp1.getTime() - do1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    }
 }
 
 let finalEL, finalML;
 let k_base = Math.floor(k_val), k_dec = Math.round((k_val % 1) * 100) / 100;
 let l_base = Math.floor(l_val), l_dec = Math.round((l_val % 1) * 100) / 100;
 
-if (q === "हक्काची रजा") {
+// 👉 फॉर्म्युला बदल: हक्काची आणि सुरेंडर रजा दोघांमध्ये केवळ EL खर्च होणार
+if (q === "हक्काची रजा" || q === "सुरेंडर रजा") {
     finalEL = (r_diff >= k_base) ? k_dec : (k_base - r_diff + k_dec);
-    finalML = l_val;
+    finalML = l_val; // मेडिकल रजा सुरक्षित राहील
 } else if (q === "वैद्यकीय रजा") {
     finalEL = applyLimits(Math.max(0, k_base - Math.max(0, r_diff - l_base) + k_dec), 365);
     finalML = (r_diff >= l_base) ? l_dec : (l_base - r_diff + l_dec);
 } else { 
-    finalEL = k_val; 
-    finalML = l_val; 
+    finalEL = k_val; finalML = l_val; 
 }
 
 finalEL = applyLimits(finalEL, 365); 
@@ -714,30 +723,36 @@ let lwpIntervals = [];
 if(e > 0) {
     let startInputs = document.querySelectorAll('.lwp-start-pick');
     let endInputs = document.querySelectorAll('.lwp-end-pick');
-    startInputs.forEach((input, i) => {
-        lwpIntervals.push({ start: input.value, end: endInputs[i].value });
-    });
+    startInputs.forEach((input, i) => { lwpIntervals.push({ start: input.value, end: endInputs[i].value }); });
 }
 
-// डेटामध्ये 'b' ची किंमत "---" म्हणून जतन करणे जेणेकरून रेंडरिंगमध्ये एरर येणार नाही
-history.push({ type: "regular", a, b: (b === "" ? "---" : b), e, f, g, h, k_val, l_val, o, p, q, r_diff, finalEL, finalML, lwpIntervals });
-localStorage.setItem("pmc_leave_history", JSON.stringify(history));
+// डेटामध्ये एन्ट्री पुश करणे
+history.push({ 
+    type: "regular", 
+    a, 
+    b: (q === "सुरेंडर रजा" ? "सुरेंडर रजा" : (b === "" ? "---" : b)), 
+    e, f, g, h, k_val, l_val, 
+    o: (q === "सुरेंडर रजा" ? "रोखीकरण" : o), 
+    p: (q === "सुरेंडर रजा" ? r_diff + " दिवस" : p), 
+    q, r_diff, finalEL, finalML, lwpIntervals 
+});
 
+localStorage.setItem("pmc_leave_history", JSON.stringify(history));
 renderTable();
 
-let nextA = formatDMY(nextDay(parseDMY(p)));
+// पुढील एन्ट्रीसाठी सुरवातीचा दिनांक ठरवणे (सुरेंडर रजेच्या वेळी पुढील दिनांक बदलणार नाही कारण कर्मचारी हजरच आहे)
+let nextA = (q === "सुरेंडर रजा") ? a : formatDMY(nextDay(parseDMY(p)));
 document.getElementById('a_start').value = nextA;
 document.getElementById('o_leave_start').value = nextA;
 document.getElementById('e_lwp').value = "0";
 
 // रिसेट पर्याय
-if(document.getElementById('is_continuous')) {
-    document.getElementById('is_continuous').checked = false;
-}
+if(document.getElementById('is_continuous')) document.getElementById('is_continuous').checked = false;
 document.getElementById('b_end').disabled = false;
+document.getElementById('p_leave_end').disabled = false;
+document.getElementById('q_type').value = "हक्काची रजा";
 
-bPick.clear(); 
-pLeavePick.clear();
+bPick.clear(); pLeavePick.clear();
 toggleLwpPanel();
 }
 function calculateBonusLeave() {
@@ -1207,6 +1222,24 @@ const link = document.createElement("a");
 link.setAttribute("href", URL.createObjectURL(blob));
 link.setAttribute("download", `Leave_Encashment_${name}.csv`);
 link.click();
+}
+    function handleSurrenderLeaveType() {
+    let qType = document.getElementById('q_type').value;
+    let pLeaveInput = document.getElementById('p_leave_end');
+    let bEndInput = document.getElementById('b_end');
+
+    if (qType === "सुरेंडर रजा") {
+        // सुरेंडर रजेला कर्मचारी रजेवर जात नाही, म्हणून 'B' ची तारीख हीच 'A' ची तारीख ठेवा
+        bEndInput.value = document.getElementById('a_start').value;
+        updateLeaveStartDate();
+        
+        // रजा संपण्याचा दिनांक लॉक करा आणि शेवटचा हजर दिनांक ऑटोमॅटिक भरा
+        pLeaveInput.value = bEndInput.value;
+        pLeaveInput.disabled = true;
+    } else {
+        pLeaveInput.disabled = false;
+        pLeaveInput.value = "";
+    }
 }
 </script>
 </body>
