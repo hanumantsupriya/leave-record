@@ -957,16 +957,17 @@ if(!dStart || !dEnd) { alert("कृपया वैध तारखा टा�
 let totalCalendarDays = Math.round((dEnd.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 let totalR = 0; let totalE = 0;
 
-history.forEach((item, index) => {
-    if (item.type === "bonus" || item.q === "सुरेंडर रजा" || item.type === "annual_extra") return; 
+history.forEach(item => {
+    // १. जर ही ओळ मॅन्युअल पेज ब्रेक किंवा एकत्रित चार्टची असेल तर हिचा LWP मोजू नये
     if (item.a && (item.a.includes("पान") || item.a.includes("एकूण") || item.a.includes("["))) return;
 
-    if (item.o && item.p && item.o !== "---" && item.o !== "रोखीकरण" && item.p !== "---") {
-        let itemO = parseDMY(item.o); let itemP = parseDMY(item.p);
-        if(itemO && itemP && itemO >= dStart && itemP <= dEnd) {
-            totalR += (parseFloat(item.r_diff) || 0); 
-            totalE += (parseFloat(item.e) || 0); 
-        }
+    let itemO = parseDMY(item.o); 
+    let itemP = parseDMY(item.p);
+    
+    // २. तारीख फिल्टरच्या परिघात येणाऱ्या रजांचा आणि केवळ त्याच ओळीतील वैयक्तिक LWP चा हिशोब करणे
+    if (itemO && itemP && itemO >= dStart && itemP <= dEnd) {
+        totalR += (parseFloat(item.r_diff) || 0); 
+        totalE += (parseFloat(item.e) || 0); // चालू वर्षाचाच प्रत्यक्ष LWP मोजला जाईल
     }
 });
 
