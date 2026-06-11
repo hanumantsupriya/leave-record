@@ -796,6 +796,8 @@ function calculateBonusLeave() {
 let startStr = document.getElementById('bonus_start_date').value;
 let endStr = document.getElementById('bonus_end_date').value;
 if(!startStr || !endStr) { alert("कृपया सुरुवातीचा आणि शेवटचा दिनांक निवडा!"); return; }
+if(history.length === 0) { alert("तक्त्यामध्ये नोंदी असणे आवश्यक आहे!"); return; }
+
 let dStart = parseDMY(startStr); let dEnd = parseDMY(endStr);
 if(!dStart || !dEnd) { alert("कृपया वैध तारखा टाका!"); return; }
 
@@ -805,16 +807,17 @@ let totalR = 0; let totalE = 0;
 history.forEach((item, index) => {
     if (item.type === "bonus" || item.q === "सुरेंडर रजा" || item.type === "annual_extra") return; 
     
-    // 👉 मुख्य दुरुस्ती: जर ही ओळ मॅन्युअल पेज ब्रेकची असेल, तर तिचा संचित (Accumulated) डेटा बेरीजेत मोजू नये
-    if (pageBreaks.includes(index)) {
-        return; 
-    }
+    // 👉 मास्टर फिल्टर: जर ही ओळ मॅन्युअल पेज ब्रेक किंवा एकत्रित चार्टची असेल तर पूर्णपणे वगळा
+    if (item.a && (item.a.includes("पान") || item.a.includes("एकूण") || item.a.includes("["))) return;
 
+    // तारीख तंतोतंत फिल्टर पद्धत (Strict Date Matching)
     if (item.o && item.p && item.o !== "---" && item.o !== "रोखीकरण" && item.p !== "---") {
         let itemO = parseDMY(item.o); let itemP = parseDMY(item.p);
+        
+        // केवळ निवडलेल्या कालावधीच्या आत येणाऱ्या वैयक्तिक रजा आणि प्रत्यक्ष LWP चीच बेरीज करणे
         if(itemO && itemP && itemO >= dStart && itemP <= dEnd) {
             totalR += (parseFloat(item.r_diff) || 0); 
-            totalE += (parseFloat(item.e) || 0); // केवळ चालू वर्षातील प्रत्यक्ष LWP मोजला जाईल
+            totalE += (parseFloat(item.e) || 0); 
         }
     }
 });
@@ -843,8 +846,7 @@ tempBonusCalculated = earnedBonusCalculated;
 tempBonusPeriod = `${startStr} ते ${endStr}`;
 tempTotalDays = totalCalendarDays; tempSpentDays = totalR; tempDutyDays = dutyDays;
 
-// स्क्रीनवर अचूक आकडेवारी दाखवणे
-document.getElementById('bonusResultMsg').innerHTML = `एकूण दिवस: ${totalCalendarDays} | रजा: ${totalR} | LWP: ${totalE} | कामाचे दिवस: ${dutyDays}<br>🎯 पात्र अतिरिक्त रजा नियमन: ${tempBonusCalculated} दिवस`;
+document.getElementById('bonusResultMsg').innerHTML = `एकूण दिवस: ${totalCalendarDays} | रजा: ${totalR} | LWP: ${totalE} | प्रत्यक्ष कामाचे दिवस (Duty Days): ${dutyDays}<br>🎯 पात्र अतिरिक्त रजा नियमन: ${tempBonusCalculated} दिवस`;
 document.getElementById('saveBonusBtn').style.display = "inline-block";
 }
 
