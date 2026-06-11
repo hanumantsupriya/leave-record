@@ -802,12 +802,19 @@ if(!dStart || !dEnd) { alert("कृपया वैध तारखा टा�
 let totalCalendarDays = Math.round((dEnd.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 let totalR = 0; let totalE = 0;
 
-history.forEach(item => {
+history.forEach((item, index) => {
     if (item.type === "bonus" || item.q === "सुरेंडर रजा" || item.type === "annual_extra") return; 
+    
+    // 👉 मुख्य दुरुस्ती: जर ही ओळ मॅन्युअल पेज ब्रेकची असेल, तर तिचा संचित (Accumulated) डेटा बेरीजेत मोजू नये
+    if (pageBreaks.includes(index)) {
+        return; 
+    }
+
     if (item.o && item.p && item.o !== "---" && item.o !== "रोखीकरण" && item.p !== "---") {
         let itemO = parseDMY(item.o); let itemP = parseDMY(item.p);
         if(itemO && itemP && itemO >= dStart && itemP <= dEnd) {
-            totalR += (parseFloat(item.r_diff) || 0); totalE += (parseFloat(item.e) || 0);
+            totalR += (parseFloat(item.r_diff) || 0); 
+            totalE += (parseFloat(item.e) || 0); // केवळ चालू वर्षातील प्रत्यक्ष LWP मोजला जाईल
         }
     }
 });
@@ -836,6 +843,7 @@ tempBonusCalculated = earnedBonusCalculated;
 tempBonusPeriod = `${startStr} ते ${endStr}`;
 tempTotalDays = totalCalendarDays; tempSpentDays = totalR; tempDutyDays = dutyDays;
 
+// स्क्रीनवर अचूक आकडेवारी दाखवणे
 document.getElementById('bonusResultMsg').innerHTML = `एकूण दिवस: ${totalCalendarDays} | रजा: ${totalR} | LWP: ${totalE} | कामाचे दिवस: ${dutyDays}<br>🎯 पात्र अतिरिक्त रजा नियमन: ${tempBonusCalculated} दिवस`;
 document.getElementById('saveBonusBtn').style.display = "inline-block";
 }
