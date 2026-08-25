@@ -1784,72 +1784,114 @@ function calculateAutomaticFixationDiff() {
     let annualIncrementMonth = parseInt(document.getElementById('annual_increment_month').value);
     let fixationOption = document.querySelector('input[name="fixation_option"]:checked').value;
     
-    if (drawnBasicStart <= 0 || !startStr || !endStr) { alert("कृपया सर्व माहिती अचूक भरा!"); return; }
-    let dStart = parseDMY(startStr); let dEnd = parseDMY(endStr);
-    if (dEnd < dStart) { alert("अखेर दिनांक चुकीचा आहे!"); return; }
-    
-    let targetMatrix = payMatrix[dueLevel];
-    let nextStageBasic = targetMatrix.find(amt => amt >= drawnBasicStart) || targetMatrix[0];
-    let nextStageIndex = targetMatrix.indexOf(nextStageBasic);
-    
-    let dueBasicStart = nextStageBasic;
-    let ruleText = "";
-    let option2PendingBonus = false;
-    
-    if (fixationOption === "1") {
-        let startMonth = dStart.getMonth() + 1;
-        let bonusIncrements = (startMonth >= 1 && startMonth <= 6) ? 1 : 2;
-        let finalDueIndex = nextStageIndex + bonusIncrements;
-        if (finalDueIndex >= targetMatrix.length) finalDueIndex = targetMatrix.length - 1;
-        dueBasicStart = targetMatrix[finalDueIndex];
-        ruleText = '💡 <b>पर्याय १ नुसार:</b> वरिष्ठ श्रेणी लागू होताच लगेच बस्ता निश्चित करून एकूण <strong>' + bonusIncrements + '</strong> वेतनवाढ लागू केली आहे.';
-    } else {
-        dueBasicStart = nextStageBasic;
-        option2PendingBonus = true;
-        ruleText = '💡 <b>पर्याय २ नुसार:</b> वरिष्ठ श्रेणीमध्ये फक्त बस्ता निश्चित केला आहे. पुढील नियमित वार्षिक वेतनवाढीला २ वेतनवाढी एकत्र लागू होतील.';
+    if (drawnBasicStart <= 0 || !startStr || !endStr) { 
+        alert("कृपया सर्व माहिती अचूक भरा!"); 
+        return; 
     }
     
-    let formattedMsg = '<strong>वेतननिश्चिती अहवाल:</strong><br>' + ruleText + '<br>• सुरवातीचे मूळ वेतन: रु. ' + drawnBasicStart + ' (' + drawnLevel + ')<br>• वरिष्ठ सुधारित निश्चित मूळ वेतन: <strong>रु. ' + dueBasicStart + ' (' + dueLevel + ')</strong>';
-    document.getElementById('fixationRuleMsg').style.display = "block"; document.getElementById('fixationRuleMsg').innerHTML = formattedMsg;
+    let dStart = parseDMY(startStr); 
+    let dEnd = parseDMY(endStr);
+    if (!dStart || !dEnd || dEnd < dStart) { 
+        alert("अखेर दिनांक किंवा सुरुवातीचा दिनांक चुकीचा आहे!"); 
+        return; 
+    }
     
+    let drawnMatrix = payMatrix[drawnLevel];
+    let targetMatrix = payMatrix[dueLevel];
+
+    if (!drawnMatrix || !targetMatrix) {
+        alert("वेतन मॅट्रिक्स स्तर सापडला नाही!");
+        return;
+    }
+
+    // १. सुरुवातीचा DRAWN इंडेक्स शोधणे
+    let drIdx = drawnMatrix.indexOf(drawnBasicStart);
+    if (drIdx === -1) {
+        // जर अचूक बेसिक सापडला नाही तर जवळचा बेसिक शोधणे
+        drIdx = drawnMatrix.findIndex(amt => amt >= drawnBasicStart);
+        if (drIdx === -1) drIdx = drawnMatrix.length - 1;
+        drawnBasicStart = drawnMatrix[drIdx];
+    }
+
+    // २. वरिष्ठ श्रेणीतील DUE बेसिक शोधणे (बस्ता / Fixation)
+    let equalOrNextBasic = targetMatrix.find(amt => amt >= drawnBasicStart) || targetMatrix[targetMatrix.length - 1];
+    let baseDueIdx = targetMatrix.indexOf(equalOrNextBasic);
+
+    let activeDrawnBasic = drawnBasicStart;
+    let activeDueBasic = equalOrNextBasic;
+    let ruleText = "";
+    let option2PendingBonus = false;
+
+    if (fixationOption === "1") {
+        let startMonth = dStart.getMonth() + 1;
+        // १ जानेवारी ते ३० जून लागू झाल्यास १ वेतनवाढ, १ जुलै ते ३१ डिसेंबर लागू झाल्यास २ वेतनवाढ
+        let bonusIncrements = (startMonth >= 1 && startMonth <= 6) ? 1 : 2;
+        let finalDueIdx = Math.min(baseDueIdx + bonusIncrements, targetMatrix.length - 1);
+        activeDueBasic = targetMatrix[finalDueIdx];
+        ruleText = `💡 <b>पर्याय १ नुसार:</b> वरिष्ठ श्रेणी लागू होताच लगेच बस्ता निश्चित करून एकूण <strong>${bonusIncrements}</strong> काल्पनिक वेतनवाढ लागू केली आहे.`;
+    } else {
+        activeDueBasic = equalOrNextBasic;
+        option2PendingBonus = true; // पुढील नियमित वार्षिक वेतनवाढीला २ वेतनवाढी लागू होतील
+        ruleText = `💡 <b>पर्याय २ नुसार:</b> वरिष्ठ श्रेणी लागू दिनांकास फक्त बस्ता (Equal/Next Stage) केला आहे. पुढील नियमित वार्षिक वेतनवाढीला २ वेतनवाढी एकत्र लागू होतील.`;
+    }
+
+    let formattedMsg = `<strong>वेतननिश्चिती अहवाल:</strong><br>${ruleText}<br>• सुरवातीचे मूळ वेतन: रु. ${drawnBasicStart} (${drawnLevel})<br>• वरिष्ठ सुधारित निश्चित मूळ वेतन: <strong>रु. ${activeDueBasic} (${dueLevel})</strong>`;
+    document.getElementById('fixationRuleMsg').style.display = "block"; 
+    document.getElementById('fixationRuleMsg').innerHTML = formattedMsg;
+
     calculatedStatements = [];
     let currentCursor = new Date(dStart.getFullYear(), dStart.getMonth(), 1);
     let endCursor = new Date(dEnd.getFullYear(), dEnd.getMonth(), 1);
-    
-    let activeDrawnBasic = drawnBasicStart; let activeDueBasic = dueBasicStart;
-    
+    let isFirstMonth = true;
+
     while (currentCursor <= endCursor) {
-        let curYear = currentCursor.getFullYear(); let curMonth = currentCursor.getMonth() + 1;
+        let curYear = currentCursor.getFullYear();
+        let curMonth = currentCursor.getMonth() + 1;
         let daysInMonth = new Date(curYear, curMonth, 0).getDate();
         let mLabel = currentCursor.toLocaleString('en-US', { month: 'short', year: '2-digit' }).toUpperCase();
-        
-        if (calculatedStatements.length > 0 && curMonth === annualIncrementMonth) {
-            let drIdx = payMatrix[drawnLevel].indexOf(activeDrawnBasic);
-            if (drIdx !== -1 && drIdx < payMatrix[drawnLevel].length - 1) activeDrawnBasic = payMatrix[drawnLevel][drIdx + 1];
-            
-            let duIdx = payMatrix[dueLevel].indexOf(activeDueBasic);
-            if (duIdx !== -1) {
+
+        // 🎯 दरवर्षी नियमित इन्क्रीमेंट महिन्यात वेतनवाढ लागू करणे (पहिला महिना सोडून)
+        if (!isFirstMonth && curMonth === annualIncrementMonth) {
+            // DRAWN Basic वाढवणे (१ नियमित वेतनवाढ)
+            let currDrIdx = drawnMatrix.indexOf(activeDrawnBasic);
+            if (currDrIdx !== -1 && currDrIdx < drawnMatrix.length - 1) {
+                activeDrawnBasic = drawnMatrix[currDrIdx + 1];
+            }
+
+            // DUE Basic वाढवणे
+            let currDuIdx = targetMatrix.indexOf(activeDueBasic);
+            if (currDuIdx !== -1) {
                 if (fixationOption === "2" && option2PendingBonus) {
-                    let targetIdx = duIdx + 2;
-                    if (targetIdx >= payMatrix[dueLevel].length) targetIdx = payMatrix[dueLevel].length - 1;
-                    activeDueBasic = payMatrix[dueLevel][targetIdx];
-                    option2PendingBonus = false;
+                    // पर्याय २ मध्ये पहिली नियमित वेतनवाढ येताच २ वेतनवाढ देणे
+                    let targetIdx = Math.min(currDuIdx + 2, targetMatrix.length - 1);
+                    activeDueBasic = targetMatrix[targetIdx];
+                    option2PendingBonus = false; // लाभ पूर्ण झाला
                 } else {
-                    if (duIdx < payMatrix[dueLevel].length - 1) activeDueBasic = payMatrix[dueLevel][duIdx + 1];
+                    // नियमित १ वेतनवाढ
+                    if (currDuIdx < targetMatrix.length - 1) {
+                        activeDueBasic = targetMatrix[currDuIdx + 1];
+                    }
                 }
             }
         }
-        
+
         calculatedStatements.push({
-            month: mLabel, actualDays: daysInMonth, presentDays: daysInMonth,
-            daRate: getHistoricalDARate(currentCursor), hraRate: getHistoricalHRARate(currentCursor),
-            drBasicNominal: activeDrawnBasic, duBasicNominal: activeDueBasic,
+            month: mLabel,
+            actualDays: daysInMonth,
+            presentDays: daysInMonth,
+            daRate: getHistoricalDARate(currentCursor),
+            hraRate: getHistoricalHRARate(currentCursor),
+            drBasicNominal: activeDrawnBasic,
+            duBasicNominal: activeDueBasic,
             drBasic: activeDrawnBasic, drDa: 0, drHra: 0, drCps: 0, drChs: 0, drTotal: 0,
             duBasic: activeDueBasic, duDa: 0, duHra: 0, duCps: 0, duChs: 0, duTotal: 0,
             diffBasic: 0, diffDa: 0, diffHra: 0, diffCps: 0, diffChs: 0, diffTotal: 0
         });
+
+        isFirstMonth = false;
         currentCursor.setMonth(currentCursor.getMonth() + 1);
     }
+
     recalculateVolumeFiveMathLogic();
 }
 function recalculateVolumeFiveMathLogic() {
