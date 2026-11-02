@@ -5,6 +5,35 @@
 <title>महानगरपालिका रजा नोंद व सेवानिवृत्ती व्यवस्थापन प्रणाली</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
+/* रजा अपूर्णांक (Fraction) दाखवण्यासाठी स्टाईल */
+.leave-fraction {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    font-size: 12px;
+}
+.frac-whole {
+    font-weight: bold;
+    margin-right: 3px;
+}
+.frac-block {
+    display: inline-flex;
+    flex-direction: column;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1;
+    vertical-align: middle;
+}
+.frac-num {
+    border-bottom: 1px solid #333;
+    padding: 0 2px 1px 2px;
+    font-weight: bold;
+}
+.frac-den {
+    padding: 1px 2px 0 2px;
+    color: #555;
+    font-size: 9px;
+}
 body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
 .container { max-width: 1550px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 h2 { text-align: center; color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; margin-bottom: 20px; }
@@ -1379,10 +1408,14 @@ function renderTable() {
                 ? (item.surrenderDays + '+' + item.surrenderDays + '=' + item.r_diff) 
                 : item.r_diff;
 
-            row.innerHTML = '<td>' + ((item.b === "---" || item.b === "सरेंडर रजा") ? "---" : item.a + " - " + item.b) + '</td><td>' + item.f + '</td><td>' + lwpDutyText + '</td><td>' + item.g.toFixed(2) + '</td><td>' + item.h.toFixed(2) + '</td>' +
-            '<td class="accumulated">' + item.k_val.toFixed(2) + '</td><td class="accumulated">' + item.l_val.toFixed(2) + '</td>' +
+            row.innerHTML = '<td>' + ((item.b === "---" || item.b === "सरेंडर रजा") ? "---" : item.a + " - " + item.b) + '</td><td>' + item.f + '</td><td>' + lwpDutyText + '</td>' +
+            '<td>' + formatLeaveFraction(item.g, "EL") + '</td>' +
+            '<td>' + formatLeaveFraction(item.h, "ML") + '</td>' +
+            '<td class="accumulated">' + formatLeaveFraction(item.k_val, "EL") + '</td>' +
+            '<td class="accumulated">' + formatLeaveFraction(item.l_val, "ML") + '</td>' +
             '<td>' + item.o + ' - ' + item.p + '</td><td>' + item.q + '</td><td><strong>' + displayR + '</strong></td>' +
-            '<td class="highlight">' + item.finalEL.toFixed(2) + '</td><td class="highlight">' + item.finalML.toFixed(2) + '</td>' +
+            '<td class="highlight">' + formatLeaveFraction(item.finalEL, "EL") + '</td>' +
+            '<td class="highlight">' + formatLeaveFraction(item.finalML, "ML") + '</td>' +
             '<td>' + lwpLeaveText + '</td>' +
             '<td>' + actionButtons + '</td>';
 
@@ -1424,8 +1457,8 @@ function renderTable() {
             let chartRow = chartBody.insertRow();
             chartRow.innerHTML = '<td>पान नंबर ' + pageNum + ' (' + pagePeriodText + ')</td>' +
                 '<td>' + pgF + '</td>' +
-                '<td>' + convertedPgG.toFixed(2) + '</td>' +
-                '<td>' + convertedPgH.toFixed(2) + '</td>' +
+                '<td>' + formatLeaveFraction(convertedPgG, "EL") + '</td>' +
+                '<td>' + formatLeaveFraction(convertedPgH, "ML") + '</td>' +
                 '<td>' + pgEL_spent + '</td>' +
                 '<td>' + pgML_spent + '</td>' +
                 '<td style="color:#e65100; font-weight:bold;">' + pgSurrender + '</td>' +
@@ -1447,8 +1480,8 @@ function renderTable() {
 
         gtRow.innerHTML = '<td>ग्रँड एकूण संख्या (Grand Total)</td>' +
             '<td>' + grandF + '</td>' +
-            '<td>' + finalGrandG.toFixed(2) + '</td>' +
-            '<td>' + finalGrandH.toFixed(2) + '</td>' +
+            '<td>' + formatLeaveFraction(finalGrandG, "EL") + '</td>' +
+            '<td>' + formatLeaveFraction(finalGrandH, "ML") + '</td>' +
             '<td>' + grandEL_spent + '</td>' +
             '<td>' + grandML_spent + '</td>' +
             '<td style="color:#e65100; font-weight:bold;">' + grandSurrender + '</td>' +
@@ -2489,7 +2522,28 @@ function downloadFixationStatementExcel() {
 }
 
 function clearFixationStatement() { calculatedStatements = []; renderStatementTable(); document.getElementById('fixationRuleMsg').style.display = "none"; }
-</script>
+// रजा अंशाधिक / अपूर्णांक रूपात (उदा. 10 २/११ किंवा ३ २२/३०) दर्शवण्यासाठी फंक्शन
+function formatLeaveFraction(val, type) {
+    if (val === undefined || val === null || isNaN(val)) return "0.00";
+    val = parseFloat(val);
+    let whole = Math.floor(val);
+    let rem = Math.round((val % 1) * 100);
+    let divisor = (type === "EL") ? 11 : 30;
+
+    // जर बाकी ० असेल तर फक्त पूर्णांक दाखवणे
+    if (rem === 0) {
+        return `<span class="leave-fraction"><span class="frac-whole">${whole}</span></span>`;
+    }
+
+    let remStr = String(rem).padStart(2, '0');
+    return `<span class="leave-fraction">` +
+           `<span class="frac-whole">${whole}</span>` +
+           `<span class="frac-block">` +
+           `<span class="frac-num">${remStr}</span>` +
+           `<span class="frac-den">${divisor}</span>` +
+           `</span>` +
+           `</span>`;
+}
 
 </script>
 </body>
