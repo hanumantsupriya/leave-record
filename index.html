@@ -20,7 +20,7 @@
     display: inline-flex;
     flex-direction: column;
     text-align: center;
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1;
     vertical-align: middle;
 }
@@ -80,16 +80,16 @@ input:disabled, input[readonly], select:disabled { background-color: #eee; color
 .btn-clear { background-color: #555555; color: white; padding: 0 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; height: 38px; white-space: nowrap; text-align: center; }
 .btn-fix-calc { background-color: #9c27b0; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; height: 38px; }
 
-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
 th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
 th { background-color: #1a73e8; color: white; }
 tr:nth-child(even) { background-color: #f9f9f9; }
 .page-break-row { background-color: #0d47a1 !important; color: white; font-weight: bold; font-size: 12px; }
 .bonus-row { background-color: #e65100 !important; color: white; font-weight: bold; font-size: 12px; }
-.bonus-details-cell { text-align: left !important; padding: 8px; line-height: 1.4; font-size: 11px; }
+.bonus-details-cell { text-align: left !important; padding: 8px; line-height: 1.4; font-size: 12px; }
 .summary-header { background-color: #2e7d32; color: white; }
 .sub-table-header { background-color: #9c27b0; color: white; font-weight: bold; }
-.grand-total-row { background-color: #c8e6c9 !important; font-weight: bold; font-size: 11px; color: #1b5e20; }
+.grand-total-row { background-color: #c8e6c9 !important; font-weight: bold; font-size: 12px; color: #1b5e20; }
 .lwp-report-header { background-color: #795548; color: white; }
 .all-leave-report-header { background-color: #00796b; color: white; }
 .highlight { font-weight: bold; color: #1a73e8; background: #e8f0fe; }
@@ -1365,8 +1365,8 @@ function renderTable() {
 
         let isBroken = pageBreaks.includes(index);
         let breakBtn = isBroken 
-            ? '<button style="background:#d32f2f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold;" onclick="toggleRowPageBreak(' + index + ')">पेज ब्रेक रद्द करा</button>'
-            : '<button style="background:#0288d1; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold;" onclick="toggleRowPageBreak(' + index + ')">पेज ब्रेक करा</button>';
+            ? '<button style="background:#d32f2f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;" onclick="toggleRowPageBreak(' + index + ')">पेज ब्रेक रद्द करा</button>'
+            : '<button style="background:#0288d1; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;" onclick="toggleRowPageBreak(' + index + ')">पेज ब्रेक करा</button>';
 
         let actionButtons = '<button class="btn-row-edit" onclick="editRow(' + index + ')">एडिट</button><button class="btn-row-delete" onclick="deleteRow(' + index + ')">रद्द</button>' + breakBtn;
 
